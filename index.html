@@ -291,7 +291,7 @@ body{font-family:var(--sans);font-variant-numeric:tabular-nums;background:var(--
 #caption .avatar{width:28px;height:28px}#caption .avatar i{height:9px}#caption .who{display:none}#capText{font-size:14px;line-height:1.45}
 .horizon span,.locchip b,.locchip span{white-space:nowrap}.subbar{flex-wrap:wrap;justify-content:flex-start}
 @media(max-width:1440px){.locchip span{display:none}}
-.stopbtn{flex:0 0 auto;padding-left:16px;padding-right:16px;border-color:#e5394f;color:#e5394f}.stopbtn:hover{background:#fdecee}
+.btn.ghost.stopbtn{border-color:#e5394f;color:#e5394f}.btn.ghost.stopbtn:hover{background:#fdecee}.stopbtn:hover{background:#fdecee}
 .capstop{pointer-events:auto;flex:none;border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 12px;font:600 12px var(--sans);color:#e5394f;transition:.2s}.capstop:hover{background:#fdecee;border-color:#e5394f}
 </style>
 </head>
@@ -574,7 +574,8 @@ function renderDetail(s){
     <div class="sms"><div class="hdr"><span>SAQI 4040</span><span>14:05</span></div>
      <div class="bubble ar" id="smsAr"></div><div class="bubble en" id="smsEn"></div></div>
     <div class="btnrow"><button class="btn sendbtn" id="sendBtn">Preview the warning</button></div>
-    <div class="btnrow"><button class="btn ghost" id="replay">▶ Replay</button><button class="btn ghost stopbtn" id="stopNar">■ Stop</button><button class="btn ghost" id="nextS">Next well</button></div>
+    <div class="btnrow"><button class="btn ghost" id="replay">▶ Replay narration</button><button class="btn ghost stopbtn" id="stopNar">■ Stop narration</button></div>
+    <div class="btnrow"><button class="btn ghost" id="nextS">Next well</button></div>
     <p class="fine">Demo only. No real message is sent and no live wells are monitored. Forecasts are simulated for real places.</p></section>
   </div></div>`;
   requestAnimationFrame(()=>$('#confI').style.width=s.conf+'%');
