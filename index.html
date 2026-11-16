@@ -367,6 +367,8 @@ body{font-family:var(--sans);font-variant-numeric:tabular-nums;background:var(--
     <div class="scanline"></div>
     <div class="topbar">
       <div class="toolbar">
+        <button class="tbtn" id="homeBtn" title="Back to the main page">← Home</button>
+        <span class="tsep"></span>
         <button class="tbtn primary" id="tourBtn">▶ Play guided tour</button>
         <button class="tbtn" id="howBtn">How it works</button>
         <span class="tsep"></span>
@@ -845,7 +847,9 @@ $('#week').oninput=e=>{week=+e.target.value;$('#wk').textContent=week;setDate();
 /* ======================= intro ======================= */
 const BOOT=['› GRACE-FO groundwater ............ linked','› Sentinel-2 / Sentinel-1 tiles .... linked','› CHIRPS rainfall · ERA5 climate .... linked','› 6 well sensors ......... 5 live · 1 OFFLINE','› herder SMS gateway ............... ready','› forecast engine .................. ready ✓'];
 (function bootLine(i=0){if(i>=BOOT.length)return;$('#boot').textContent+=BOOT[i]+'\n';setTimeout(()=>bootLine(i+1),260)})();
-function enter(tour){blip(520,.18,'triangle');$('#intro').classList.add('hide');setTimeout(()=>$('#intro').remove(),600);bootT0=performance.now();if(tour)setTimeout(startTour,700)}
+function enter(tour){blip(520,.18,'triangle');$('#intro').classList.add('hide');bootT0=performance.now();if(tour)setTimeout(startTour,700)}
+function goHome(){if(touring)stopTour();stopVoice();$('#how').classList.add('hide');selected=null;renderList();emptyDetail();resetView();$('#hint').style.opacity=1;$('#intro').classList.remove('hide')}
+$('#homeBtn').onclick=goHome;
 $('#enterVoice').onclick=()=>enter(true);$('#enterSilent').onclick=()=>enter(false);
 addEventListener('keydown',e=>{if(e.key==='Escape'){$('#how').classList.add('hide');if(touring)stopTour()}});
 
