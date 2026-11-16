@@ -345,6 +345,10 @@ body{font-family:var(--sans);font-variant-numeric:tabular-nums;background:var(--
  #chatFab span{display:none}#chatFab{padding:13px}#chat{right:10px;bottom:10px;width:calc(100% - 20px);height:calc(100% - 120px)}
  #coach .tip{width:calc(100% - 24px)!important;left:12px!important}
 }
+#caption{left:18px!important;transform:translateY(10px)!important;width:min(620px,calc(100% - 230px))!important}
+#caption.on{transform:none!important}
+.topbar>.liveflag{display:none}.locchip .sim{color:#e59400;font-weight:600}
+@media(max-width:700px){#caption{width:calc(100% - 90px)!important;left:10px!important}}
 </style>
 </head>
 <body>
@@ -440,7 +444,7 @@ body{font-family:var(--sans);font-variant-numeric:tabular-nums;background:var(--
     </div>
     <div class="subbar">
       <div class="horizon"><span>Forecast</span><input type="range" id="week" min="0" max="8" step="1" value="0" aria-label="Forecast horizon in weeks"><span>Today + <b id="wk">0</b> weeks, <b id="dateLbl"></b></span></div>
-      <div class="chip locchip"><b>Al Dhafra and Al Ain, Abu Dhabi</b><span id="coordChip">23°55′ N / 54°15′ E</span></div>
+      <div class="chip locchip"><b>Al Dhafra and Al Ain, Abu Dhabi</b><span id="coordChip">23°55′ N / 54°15′ E</span><span class="sim">● Simulated data</span></div>
     </div>
     <div class="hint" id="hint">Click a beacon to zoom into its problem. Drag to rotate.</div>
     <div class="focus-tag" id="focusTag"><strong id="focusTitle">SITE LOCKED</strong><span id="focusSub"></span></div>
