@@ -293,6 +293,11 @@ body{font-family:var(--sans);font-variant-numeric:tabular-nums;background:var(--
 @media(max-width:1440px){.locchip span{display:none}}
 .btn.ghost.stopbtn{border-color:#e5394f;color:#e5394f}.btn.ghost.stopbtn:hover{background:#fdecee}.stopbtn:hover{background:#fdecee}
 .capstop{pointer-events:auto;flex:none;border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 12px;font:600 12px var(--sans);color:#e5394f;transition:.2s}.capstop:hover{background:#fdecee;border-color:#e5394f}
+.dgauge{position:relative;height:10px;border-radius:10px;background:linear-gradient(90deg,#12a26a,#e59400 45%,#ef6c1a 65%,#e5394f);margin:6px 0 6px}
+.dgauge i{position:absolute;top:-5px;width:4px;height:20px;border-radius:3px;background:#17262e;transform:translateX(-2px);box-shadow:0 0 0 3px #fff}
+#mini{width:100%;height:200px;display:block;margin-top:12px;border-radius:12px;border:1px solid var(--line);background:#fbf8f2}
+.avoid{display:flex;flex-direction:column;gap:3px;margin-top:12px;padding:11px 13px;border-radius:12px;border:1px solid color-mix(in srgb,var(--c) 35%,#fff);background:color-mix(in srgb,var(--c) 7%,#fff);font-size:13px;line-height:1.55;color:var(--text)}
+.avoid b{color:var(--c)}.avoid em{font-style:normal;font-weight:700}
 </style>
 </head>
 <body>
@@ -467,6 +472,16 @@ const FX={
  gh:{fx:'share',head:'Healthy, with water to spare',stat:'+6 herds capacity',sub:'Receiving herds from Hameem'},
  rm:{fx:'rain',head:'Recharging after the storm',stat:'+38 mm rain',sub:'Water level rising 0.12 m / week'}};
 SITES.forEach(s=>Object.assign(s,FX[s.id]));
+const DANGER={
+ liwa:{score:92,lvl:'Very high',go:'gh',avoid:'Avoid Hameem from Sunday. Send herds and water trucks to Ghayathi instead.'},
+ quaa:{score:68,lvl:'High',go:'rm',avoid:'Only use it on your rota days (Monday and Thursday). Otherwise, take herds to Remah.'},
+ mz:{score:61,lvl:'High',go:'gh',avoid:'From week 5, do not give camels this water without blending it. Ghayathi is the safe backup.'},
+ sw:{score:44,lvl:'Medium',go:'rm',avoid:'Safe to use for now, but the reading is uncertain while the sensor is down. Remah is the backup.'},
+ gh:{score:14,lvl:'Low',go:null,avoid:'Herds leaving Hameem and Madinat Zayed are being sent here.'},
+ rm:{score:8,lvl:'Very low',go:null,avoid:"Recharged by rain and open to herds from Al Qua'a and Sweihan."}};
+SITES.forEach(s=>s.danger=DANGER[s.id]);
+const dColor=v=>v>=80?'#e5394f':v>=55?'#ef6c1a':v>=35?'#e59400':'#12a26a';
+function kmBetween(a,b){const R=6371,t=Math.PI/180,dLat=(b.lat-a.lat)*t,dLon=(b.lon-a.lon)*t,x=Math.sin(dLat/2)**2+Math.cos(a.lat*t)*Math.cos(b.lat*t)*Math.sin(dLon/2)**2;return Math.round(2*R*Math.asin(Math.sqrt(x)))}
 const INTRO="Hi, and welcome to SAQI. It means the water-bearer. Right now, most desert communities only find out a well is failing when it's already dry. And by then, it's too late. SAQI warns them weeks earlier. On this map, you're looking at six real water sources, across Al Dhafra and Al Ain, in Abu Dhabi. Every night, we combine satellite data, well sensors, and reports from herders. We predict how long each source has left, and we're honest about how sure we are. Then we send a simple Arabic text, and a phone call, to the people who need to act. Go ahead, pick any location, and I'll walk you through it.";
 const OUTRO="So, that's SAQI. Satellite and sensor data, an honest prediction, and a warning that reaches a herder's basic phone, weeks before the crisis. Because the first warning shouldn't be an empty bucket.";
 
@@ -565,12 +580,16 @@ function renderDetail(s){
     <div class="bigval"><strong style="color:${c}">${Math.max(0,d)}<small>days</small></strong><span class="range">Likely range<br><b>${lo}–${hi} days</b></span></div>
     <div class="confbar"><i id="confI"></i></div><div class="legend"><span>Model confidence</span><span>${s.conf}%</span></div>
     <canvas id="chart"></canvas><div class="legend"><span>20 weeks ago</span><span>${s.metric} (${s.unit})</span><span>+8 weeks</span></div></section>
+   <section class="block"><div class="btitle">Danger level <strong style="color:${dColor(s.danger.score)};font-weight:700">${s.danger.lvl}</strong></div>
+    <div class="dgauge"><i style="left:${s.danger.score}%"></i></div><div class="legend"><span>Safe</span><span><b style="color:${dColor(s.danger.score)}">${s.danger.score}</b> / 100</span><span>Critical</span></div>
+    <canvas id="mini"></canvas>
+    <div class="avoid" style="--c:${s.danger.go?dColor(s.danger.score):'#12a26a'}"><b>${s.danger.go?'Avoid or go instead':'Safe to use'}</b><span>${s.danger.avoid}${s.danger.go?` <em>${SITES.find(q=>q.id===s.danger.go).name}, ${kmBetween(s,SITES.find(q=>q.id===s.danger.go))} km away.</em>`:''}</span></div></section>
    <section class="block"><div class="btitle">What is wrong</div>
     <div class="issue" style="--c:${c}"><h3>${s.issue}</h3><p>${s.cause}</p></div>
     <div class="next"><b>Next step</b><span>${s.next}</span></div></section>
    <section class="block"><div class="btitle">Evidence <strong>${s.sig.length} signals</strong></div>
     ${s.sig.map(g=>`<div class="sig"><span class="k">${g[0]}</span><span class="v ${g[2]}">${g[1]}</span></div>`).join('')}</section>
-   <section class="block"><div class="btitle">Plan</div><ol class="steps">
+   <section class="block"><div class="btitle">How to fix it</div><ol class="steps">
     ${s.steps.map((a,k)=>`<li><span class="n">0${k+1}</span><div><strong>${a[0]}</strong>${a[1]}</div></li>`).join('')}</ol></section>
    <section class="block"><div class="btitle">Warning sent to herders <strong>SMS and voice call</strong></div>
     <div class="sms"><div class="hdr"><span>SAQI 4040</span><span>14:05</span></div>
@@ -582,7 +601,7 @@ function renderDetail(s){
   </div></div>`;
   requestAnimationFrame(()=>$('#confI').style.width=s.conf+'%');
   typeText($('#smsAr'),s.sms_ar,16);setTimeout(()=>typeText($('#smsEn'),s.sms_en,8),350);
-  drawChart(s);
+  drawChart(s);drawMini(s);
   $('#sendBtn').onclick=()=>{blip(1200,.1);toast(`✓ ${s.people.toLocaleString()} people would get this SMS and an Arabic voice call. Nothing was actually sent.`)};
   $('#replay').onclick=()=>speak(s.say,null,s.id);
   $('#stopNar').onclick=stopNarration;
@@ -614,10 +633,47 @@ function drawChart(s){
     if(p<1)requestAnimationFrame(anim)})(t0);
 }
 
+/* ======================= DANGER MINI-MAP ======================= */
+function drawMini(s){
+  const cv=document.getElementById('mini');if(!cv)return;const dpr=devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;cv.width=W*dpr;cv.height=H*dpr;const g=cv.getContext('2d');g.scale(dpr,dpr);
+  const L0=52.45,L1=56.05,A0=22.8,A1=24.95,X=lon=>8+(lon-L0)/(L1-L0)*(W-16),Y=lat=>8+(A1-lat)/(A1-A0)*(H-16);
+  const t0=performance.now();
+  (function frame(t){const k=Math.min(1,(t-t0)/900),e=ease(k),pul=(t*.0012)%1;
+    g.clearRect(0,0,W,H);
+    // sea + coast
+    g.fillStyle='#e3eff8';g.beginPath();g.moveTo(0,0);COAST.forEach(c=>g.lineTo(X(c[0]),Y(Math.min(c[1],A1))));g.lineTo(W,0);g.closePath();g.fill();
+    g.strokeStyle='#7aa7d9';g.lineWidth=1.5;g.beginPath();COAST.forEach((c,i)=>i?g.lineTo(X(c[0]),Y(Math.min(c[1],A1))):g.moveTo(X(c[0]),Y(c[1])));g.stroke();
+    g.fillStyle='#7aa7d9';g.font='600 10px "Public Sans",sans-serif';g.fillText('Arabian Gulf',X(52.75),Y(24.65));
+    g.fillStyle='#b9945a';g.fillText('Rub al Khali',X(52.6),Y(22.92));
+    g.fillStyle='#5b6f79';g.beginPath();g.arc(X(54.37),Y(24.45),2.5,0,7);g.fill();g.fillText('Abu Dhabi',X(54.37)+5,Y(24.45)+3);
+    g.beginPath();g.arc(X(55.76),Y(24.2),2.5,0,7);g.fill();g.fillText('Al Ain',X(55.76)-34,Y(24.2)-5);
+    // all sites: danger halos
+    SITES.forEach(q=>{const x=X(q.lon),y=Y(q.lat),c=dColor(q.danger.score),R=(8+q.danger.score*.38)*(q===s?1:.7);
+      const gr=g.createRadialGradient(x,y,0,x,y,R);gr.addColorStop(0,c+(q===s?'66':'33'));gr.addColorStop(1,c+'00');g.fillStyle=gr;g.beginPath();g.arc(x,y,R,0,7);g.fill();
+      g.fillStyle=c;g.beginPath();g.arc(x,y,q===s?5:3.5,0,7);g.fill();g.strokeStyle='#fff';g.lineWidth=1.5;g.stroke()});
+    // selected danger ring pulse
+    const x=X(s.lon),y=Y(s.lat),c=dColor(s.danger.score);
+    g.strokeStyle=c;g.globalAlpha=1-pul;g.lineWidth=2;g.beginPath();g.arc(x,y,6+pul*(14+s.danger.score*.3),0,7);g.stroke();g.globalAlpha=1;
+    if(s.danger.score>=55){g.setLineDash([3,3]);g.strokeStyle=c;g.lineWidth=1.2;g.beginPath();g.arc(x,y,10+s.danger.score*.22,0,7);g.stroke();g.setLineDash([])}
+    // route to the safer well (or incoming routes to a safe well)
+    const route=(a,b,col,label,idx=0)=>{const ax=X(a.lon),ay=Y(a.lat),bx=X(b.lon),by=Y(b.lat),mx=(ax+bx)/2,my=Math.min(ay,by)-28;
+      const P2=u=>[(1-u)**2*ax+2*(1-u)*u*mx+u*u*bx,(1-u)**2*ay+2*(1-u)*u*my+u*u*by];
+      g.strokeStyle=col;g.lineWidth=2.4;g.setLineDash([6,5]);g.lineDashOffset=-t*.03;g.beginPath();for(let i=0;i<=40*e;i++){const p=P2(i/40);i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1])}g.stroke();g.setLineDash([]);
+      if(e>=1){const p=P2(1),q=P2(.94),an=Math.atan2(p[1]-q[1],p[0]-q[0]);g.fillStyle=col;g.beginPath();g.moveTo(p[0],p[1]);g.lineTo(p[0]-10*Math.cos(an-.45),p[1]-10*Math.sin(an-.45));g.lineTo(p[0]-10*Math.cos(an+.45),p[1]-10*Math.sin(an+.45));g.closePath();g.fill();
+        if(label){const m=P2(.5);g.font='700 10px "Public Sans",sans-serif';const w=g.measureText(label).width+12;g.fillStyle='#fff';g.strokeStyle=col;g.lineWidth=1;const oy=idx*22,ox=idx*14;g.beginPath();g.roundRect(m[0]-w/2+ox,m[1]-18+oy,w,17,8);g.fill();g.stroke();g.fillStyle=col;g.fillText(label,m[0]-w/2+6+ox,m[1]-6+oy)}}};
+    if(s.danger.go){const b=SITES.find(q=>q.id===s.danger.go);route(s,b,'#12a26a',`Go here · ${kmBetween(s,b)} km`)}
+    else SITES.filter(q=>q.danger.go===s.id).forEach(a=>route(a,s,'#12a26a',null));
+    // labels
+    SITES.forEach(q=>{const isS=q===s,isGo=s.danger.go===q.id;if(!isS&&!isGo&&!(q.danger.go===s.id))return;
+      const nm=q.name.replace(/ (Well Field|Herd Well|Borehole|Village Well|Reserve Well|Recharge Well)$/,''),lx=X(q.lon),ly=Y(q.lat);
+      g.font='700 11px "Public Sans",sans-serif';const w=g.measureText(nm).width;const left=lx+w+14>W;g.fillStyle='#17262e';g.fillText(nm,left?lx-w-9:lx+8,ly+15)});
+    if(document.getElementById('mini')===cv&&selected===s)requestAnimationFrame(frame)})(t0);
+}
+
 /* ======================= HOLOGRAM ENGINE ======================= */
 const cv=$('#holo'),ctx=cv.getContext('2d');let W=0,H=0;
 function resize(){const dpr=Math.min(2,devicePixelRatio||1);W=cv.clientWidth;H=cv.clientHeight;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
-addEventListener('resize',()=>{resize();if(selected)drawChart(selected)});
+addEventListener('resize',()=>{resize();if(selected){drawChart(selected);drawMini(selected)}});
 const GW=40,GD=26,NX=78,NZ=50,AQ=-3.2;
 const toX=lon=>((lon-LON0)/(LON1-LON0)-.5)*GW,toZ=lat=>((lat-LAT0)/(LAT1-LAT0)-.5)*GD;
 const lonOf=x=>LON0+(x/GW+.5)*(LON1-LON0),latOf=z=>LAT0+(z/GD+.5)*(LAT1-LAT0);
