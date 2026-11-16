@@ -349,6 +349,34 @@ body{font-family:var(--sans);font-variant-numeric:tabular-nums;background:var(--
 #caption.on{transform:none!important}
 .topbar>.liveflag{display:none}.locchip .sim{color:#e59400;font-weight:600}
 @media(max-width:700px){#caption{width:calc(100% - 90px)!important;left:10px!important}}
+
+/* ---------- 3D diorama overlay ---------- */
+#holo{background:#0b1115;overflow:hidden}
+#holo canvas{touch-action:none}
+.map3dLayer{position:absolute;inset:0;pointer-events:none;z-index:2;font-family:var(--sans)}
+.tags3d{position:absolute;inset:0}
+.tag3d{position:absolute;left:0;top:0;display:flex;align-items:center;gap:6px;padding:4px 9px 4px 7px;border-radius:7px;background:rgba(8,20,26,.78);border:1px solid color-mix(in srgb,var(--c) 70%,transparent);box-shadow:0 0 14px color-mix(in srgb,var(--c) 45%,transparent);color:#eafcff;font:700 12px/1 var(--sans);white-space:nowrap;cursor:pointer;transition:opacity .25s;backdrop-filter:blur(4px);will-change:transform}
+.tag3d i{width:8px;height:8px;background:var(--c);transform:rotate(45deg);box-shadow:0 0 8px var(--c);flex:none}
+.tag3d b{color:var(--c);font-variant-numeric:tabular-nums}.tag3d b::after{content:"d";margin-left:1px;opacity:.8}
+.tag3d span{display:none;font-weight:500;color:#bfe9ef}
+.tag3d.full span{display:inline}
+.map3dTip{position:absolute;left:0;top:0;padding:6px 10px;border-radius:8px;background:rgba(8,20,26,.9);color:#eafcff;font:600 12px var(--sans);border:1px solid rgba(95,243,255,.35);opacity:0;transition:opacity .15s;pointer-events:none}
+.map3dTip.on{opacity:1}
+.map3dBack{position:absolute;left:14px;bottom:86px;pointer-events:auto;border:1px solid rgba(95,243,255,.55);background:rgba(8,20,26,.82);color:#dffcff;font:700 13px var(--sans);padding:9px 14px;border-radius:10px;cursor:pointer;box-shadow:0 0 18px rgba(46,240,228,.25);transition:.2s}
+.map3dBack:hover{background:rgba(20,60,70,.9)}.map3dBack:focus-visible{outline:2px solid #5ff3ff;outline-offset:2px}
+.holoHud{position:absolute;left:0;top:0;width:230px;padding:12px 14px;border-radius:12px;background:linear-gradient(160deg,rgba(10,40,52,.78),rgba(6,18,24,.82));border:1px solid rgba(95,243,255,.4);box-shadow:0 0 24px rgba(46,240,228,.18),inset 0 0 30px rgba(95,243,255,.06);color:#dffcff;opacity:0;pointer-events:none;backdrop-filter:blur(3px)}
+.holoHud::before{content:"";position:absolute;inset:0;border-radius:12px;background:repeating-linear-gradient(0deg,rgba(95,243,255,.05) 0 1px,transparent 1px 3px);pointer-events:none}
+.hh-title{font:700 13px var(--sans);color:#9ff6ff;margin-bottom:6px}
+.hh-row{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.hh-days{font:800 38px/1 var(--sans);font-variant-numeric:tabular-nums;text-shadow:0 0 16px currentColor}
+.hh-days small{display:block;font:600 10px var(--sans);color:#9ccbd3;text-shadow:none;margin-top:3px}
+.hh-gauge{width:82px;height:50px}.hh-gauge text{fill:#eafcff;font:800 15px var(--sans)}.hh-gauge text.sm{font:600 7px var(--sans);fill:#9ccbd3}
+.hh-chart{width:100%;height:62px;margin-top:6px}.hh-chart text{fill:#8fb9c1;font:600 7px var(--sans)}
+.hh-foot{font:600 11px/1.35 var(--sans);color:#bfe9ef;margin-top:4px}
+@media (max-width:760px){.holoHud{width:180px;padding:9px}.hh-days{font-size:28px}.hh-chart{height:46px}.map3dBack{bottom:120px}}
+.main.fsmap{position:fixed!important;inset:0;z-index:50;border-radius:0}
+#main:fullscreen{border-radius:0;width:100vw;height:100vh}
+#holo{background:radial-gradient(ellipse at 50% 40%,#16323a 0%,#0b1418 55%,#060a0c 100%)!important}
 </style>
 </head>
 <body>
@@ -423,7 +451,7 @@ body{font-family:var(--sans);font-variant-numeric:tabular-nums;background:var(--
 
   <!-- ============ MAP / HOLOGRAM ============ -->
   <main class="main" id="main">
-    <canvas id="holo" aria-label="Interactive 3D hologram of water sources in Al Dhafra and Al Ain. Click a beacon to hear about it."></canvas>
+    <div id="holo" role="application" aria-label="Interactive 3D map of water sources in Al Dhafra and Al Ain. Click a beacon to fly in and hear about it."></div>
     <div class="scanline"></div>
     <div class="topbar">
       <div class="toolbar">
@@ -439,6 +467,7 @@ body{font-family:var(--sans);font-variant-numeric:tabular-nums;background:var(--
         <button class="tbtn icon" id="zoomIn" aria-label="Zoom in">+</button>
         <button class="tbtn icon" id="zoomOut" aria-label="Zoom out">−</button>
         <button class="tbtn icon" id="resetBtn" aria-label="Back to full map" title="Back to full map">⌖</button>
+        <button class="tbtn icon" id="fsBtn" aria-label="Full screen map" title="Full screen map">⛶</button>
       </div>
       <div class="liveflag"><b></b>Simulated data</div>
     </div>
@@ -815,210 +844,22 @@ function drawMini(s){
     if(document.getElementById('mini')===cv&&selected===s)requestAnimationFrame(frame)})(t0);
 }
 
-/* ======================= HOLOGRAM ENGINE ======================= */
-const cv=$('#holo'),ctx=cv.getContext('2d');let W=0,H=0;
-function resize(){const dpr=Math.min(2,devicePixelRatio||1);W=cv.clientWidth;H=cv.clientHeight;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
-addEventListener('resize',()=>{resize();if(selected){drawChart(selected);drawMini(selected)}});
-const GW=40,GD=26,NX=78,NZ=50,AQ=-3.2;
-const toX=lon=>((lon-LON0)/(LON1-LON0)-.5)*GW,toZ=lat=>((lat-LAT0)/(LAT1-LAT0)-.5)*GD;
-const lonOf=x=>LON0+(x/GW+.5)*(LON1-LON0),latOf=z=>LAT0+(z/GD+.5)*(LAT1-LAT0);
+/* ======================= 3D MAP BRIDGE (Three.js diorama lives in map3d/) ======================= */
 const COAST=[[52.0,24.08],[52.6,24.18],[53.1,24.12],[53.6,24.17],[54.05,24.25],[54.35,24.42],[54.6,24.5],[54.95,24.78],[55.2,25.0]];
-function isSea(lon,lat){for(let k=0;k<COAST.length-1;k++){const[a,b]=COAST[k],[c,d]=COAST[k+1];if(lon>=a&&lon<=c)return lat>b+(d-b)*(lon-a)/(c-a)}return lon<COAST[0][0]?lat>COAST[0][1]:lat>25}
-function terrainH(x,z){const lon=lonOf(x),lat=latOf(z);
-  let h=.3*Math.sin(x*1.1+z*.5)+.18*Math.sin(x*2.3-z*1.7)+.09*Math.sin(x*4.1+z*3.3);
-  h+=2.8*Math.exp(-(((lon-55.78)/.12)**2+((lat-24.06)/.18)**2));      // Jebel Hafeet
-  h+=1.5*Math.exp(-(((lon-56.05)/.18)**2));                           // Hajar foothills
-  h+=.7*Math.exp(-(((lat-23.05)/.35)**2))*(.6+.4*Math.sin(x*3));       // Liwa megadunes
-  return h*.9}
-const G=[];for(let j=0;j<NZ;j++){const row=[];for(let i=0;i<NX;i++){const x=(i/(NX-1)-.5)*GW,z=(j/(NZ-1)-.5)*GD,sea=isSea(lonOf(x),latOf(z));row.push({x,z,h:sea?-.2:terrainH(x,z),sea,heat:0,hc:[10,154,168]})}G.push(row)}
-function computeHeat(){G.forEach(r=>r.forEach(p=>{let best=0,col=[10,154,168];SITES.forEach(s=>{const st=stOf(s);if(st==='ok')return;const dx=p.x-toX(s.lon),dz=p.z-toZ(s.lat),k=Math.exp(-(dx*dx+dz*dz)/(st==='act'?9:st==='warn'?5:3.5))*(st==='act'?1:st==='warn'?.75:.5);if(k>best){best=k;col=st==='act'?[229,57,79]:st==='warn'?[229,148,0]:[47,127,209]}});p.heat=best;p.hc=col}))}
-
-let cam={yaw:-.32,pitch:.95,dist:36,tx:0,tz:0},fly=null;
-function flyTo(to,dur=1500){fly={from:{...cam},to:{...cam,...to},t0:performance.now(),dur}}
-let selT=-1e9;
-function focusOn(s){flyTo({tx:toX(s.lon),tz:toZ(s.lat),dist:12.5,pitch:.74,yaw:cam.yaw+.35},1600)}
-function resetView(){flyTo({tx:0,tz:0,dist:36,pitch:.95,yaw:-.32},1300)}
-function P(x,y,z){x-=cam.tx;z-=cam.tz;const cy=Math.cos(cam.yaw),sy=Math.sin(cam.yaw);let X=x*cy-z*sy,Z=x*sy+z*cy;const cp=Math.cos(cam.pitch),sp=Math.sin(cam.pitch);const Y=y*cp+Z*sp;Z=-y*sp+Z*cp;Z+=cam.dist;const f=Math.min(W,H*1.55)*1.1/Math.max(.5,Z);return[W/2+X*f,H*.57-Y*f,Z,f]}
-
-let drag=null,hover=null,autoRot=true,lastTouch=0,screenPos={};
-cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,yaw:cam.yaw,pitch:cam.pitch,moved:false};fly=null;lastTouch=performance.now();cv.setPointerCapture(e.pointerId)});
-cv.addEventListener('pointermove',e=>{const r=cv.getBoundingClientRect();
-  if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>4)drag.moved=true;cam.yaw=drag.yaw+dx*.006;cam.pitch=Math.max(.4,Math.min(1.35,drag.pitch+dy*.004));lastTouch=performance.now()}
-  else{hover=hit(e.clientX-r.left,e.clientY-r.top);cv.style.cursor=hover?'pointer':'grab'}});
-cv.addEventListener('pointerup',e=>{const r=cv.getBoundingClientRect();if(drag&&!drag.moved){const s=hit(e.clientX-r.left,e.clientY-r.top);if(s){if(touring)stopTour();select(s,true)}}drag=null});
-cv.addEventListener('wheel',e=>{e.preventDefault();fly=null;cam.dist=Math.max(12,Math.min(54,cam.dist+e.deltaY*.02));lastTouch=performance.now()},{passive:false});
-function hit(mx,my){let best=null,bd=30;SITES.forEach(s=>{const p=screenPos[s.id];if(!p)return;[p.base,p.top,p.label].forEach(q=>{const d=Math.hypot(q[0]-mx,q[1]-my);if(d<bd){bd=d;best=s}})});return best}
-$('#zoomIn').onclick=()=>flyTo({dist:Math.max(12,cam.dist*.75)},600);
-$('#zoomOut').onclick=()=>flyTo({dist:Math.min(54,cam.dist*1.3)},600);
+const MAP3D=(m,...a)=>{if(window.SAQI3D)window.SAQI3D[m](...a);else(window.SAQI3D_Q=window.SAQI3D_Q||[]).push([m,a])};
+function focusOn(s){MAP3D('focus',s)}
+function resetView(){MAP3D('reset')}
+function computeHeat(){MAP3D('refresh')}
+function resize(){}
+const toX=()=>0,toZ=()=>0;let selT=0,bootT0=0;const pulses={push(){}};
+addEventListener('resize',()=>{if(selected){drawChart(selected);drawMini(selected)}});
+$('#zoomIn').onclick=()=>MAP3D('zoom',.75);
+$('#fsBtn').onclick=()=>{const m=$('#main');if(document.fullscreenElement)document.exitFullscreen();else if(m.requestFullscreen)m.requestFullscreen().catch(()=>m.classList.toggle('fsmap'));else m.classList.toggle('fsmap')};
+document.addEventListener('fullscreenchange',()=>$('#fsBtn').textContent=document.fullscreenElement?'🗗':'⛶');
+$('#zoomOut').onclick=()=>MAP3D('zoom',1.3);
 $('#resetBtn').onclick=()=>{selected=null;renderList();emptyDetail();$('#focusTag').classList.remove('show');stopVoice();resetView()};
-
-const particles=Array.from({length:60},()=>({x:(Math.random()-.5)*GW,z:(Math.random()-.5)*GD,y:Math.random()*7,v:.008+Math.random()*.02}));
-let bootT0=0,scanT=9,pulses=[];
-const rgba=(c,a)=>`rgba(${c[0]},${c[1]},${c[2]},${a})`;
-const hex2=h=>{const n=parseInt(h.slice(1),16);return[n>>16,n>>8&255,n&255]};
-
-function frame(t){
-  if(fly){const k=Math.min(1,(t-fly.t0)/fly.dur),e=ease(k);for(const key in fly.to)cam[key]=fly.from[key]+(fly.to[key]-fly.from[key])*e;cam.dist+=Math.sin(k*Math.PI)*5;if(k>=1){cam.dist=fly.to.dist;fly=null}}
-  else if(!drag&&t-lastTouch>3500){cam.yaw+=selected?.0007:.0018}
-  ctx.clearRect(0,0,W,H);
-  const boot=ease(Math.min(1,(t-bootT0)/2600));               // terrain rises on load
-  const sweepX=((t*.004)%(GW+16))-GW/2-8;                      // scan band crossing terrain
-  // --- projector disc / shadow
-  const c0=P(0,-.3,0);ctx.save();ctx.translate(c0[0],c0[1]);ctx.scale(1,.32);const rg=ctx.createRadialGradient(0,0,0,0,0,c0[3]*GW*.62);rg.addColorStop(0,'rgba(10,154,168,.10)');rg.addColorStop(1,'rgba(10,154,168,0)');ctx.fillStyle=rg;ctx.beginPath();ctx.arc(0,0,c0[3]*GW*.62,0,7);ctx.fill();ctx.restore();
-  // --- aquifer layer (underground)
-  ctx.lineWidth=1;ctx.strokeStyle='rgba(40,110,220,.13)';
-  for(let j=0;j<NZ;j+=5){ctx.beginPath();for(let i=0;i<NX;i+=3){const p=G[j][i],q=P(p.x,AQ+.12*Math.sin(t*.0015+p.x*.4+p.z*.3),p.z);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}ctx.stroke()}
-  for(let i=0;i<NX;i+=6){ctx.beginPath();for(let j=0;j<NZ;j+=2){const p=G[j][i],q=P(p.x,AQ+.12*Math.sin(t*.0015+p.x*.4+p.z*.3),p.z);j?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}ctx.stroke()}
-  // --- terrain (project once)
-  const PP=G.map((r,j)=>r.map(p=>{const h=p.h*boot*(1-.0*j);return P(p.x,h,p.z)}));
-  const reveal=Math.floor(boot*NZ*1.2);
-  for(let j=0;j<NZ&&j<reveal;j++){ctx.beginPath();let za=0;for(let i=0;i<NX;i++){const q=PP[j][i];za+=q[2];i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}za/=NX;
-    const a=Math.max(.05,Math.min(.3,(62-za)/60));ctx.strokeStyle=`rgba(11,138,148,${a})`;ctx.stroke()}
-  for(let i=0;i<NX;i+=3){ctx.beginPath();for(let j=0;j<NZ&&j<reveal;j++){const q=PP[j][i];j?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}ctx.strokeStyle='rgba(11,138,148,.07)';ctx.stroke()}
-  // --- vertex dots: sea, heat, height tint, scan band
-  for(let j=0;j<NZ&&j<reveal;j++)for(let i=0;i<NX;i++){const p=G[j][i],q=PP[j][i];
-    const inScan=Math.abs(p.x-sweepX)<1.1;
-    if(p.sea){if((i+j)%2===0){ctx.fillStyle='rgba(60,130,230,.45)';ctx.fillRect(q[0]-1,q[1]-1,2,2)}continue}
-    if(p.heat>.08){const pul=.65+.35*Math.sin(t*.004+p.x);ctx.fillStyle=rgba(p.hc,Math.min(.85,p.heat*pul));const s=1.2+p.heat*2.2;ctx.fillRect(q[0]-s/2,q[1]-s/2,s,s)}
-    else if(p.h>1.1){ctx.fillStyle=`rgba(192,138,62,${Math.min(.6,(p.h-1)*.35)})`;ctx.fillRect(q[0]-1,q[1]-1,2,2)}
-    if(inScan&&(i+j)%2===0){ctx.fillStyle='rgba(11,138,148,.5)';ctx.fillRect(q[0]-1.3,q[1]-1.3,2.6,2.6)}}
-  // --- coastline
-  ctx.beginPath();COAST.forEach((c,k)=>{const q=P(toX(c[0]),0,toZ(Math.min(c[1],LAT1)));k?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])});ctx.strokeStyle='rgba(40,110,220,.75)';ctx.lineWidth=2;ctx.stroke();ctx.lineWidth=1;
-  // --- place labels
-  ctx.font='600 10px "Public Sans",sans-serif';
-  const lab=(txt,lon,lat,col)=>{const q=P(toX(lon),terrainH(toX(lon),toZ(lat))*boot,toZ(lat));ctx.fillStyle=col;ctx.fillText(txt,q[0],q[1])};
-  lab('ARABIAN GULF',53.0,24.75,'rgba(40,110,220,.6)');lab('RUB AL KHALI · EMPTY QUARTER',52.9,22.88,'rgba(170,115,40,.65)');lab('◆ ABU DHABI',54.37,24.45,'rgba(13,31,42,.55)');lab('◆ AL AIN',55.76,24.22,'rgba(13,31,42,.55)');
-  // --- particles
-  particles.forEach(p=>{p.y+=p.v;if(p.y>7)p.y=0;const q=P(p.x,p.y,p.z);ctx.fillStyle=`rgba(10,154,168,${.45*(1-p.y/7)*boot})`;ctx.fillRect(q[0],q[1],1.6,1.6)});
-  // --- spotlight: fade everything except the selected site
-  if(selected){const sx=toX(selected.lon),sz=toZ(selected.lat),q=P(sx,terrainH(sx,sz)*boot,sz),k=ease(Math.min(1,(t-selT)/1000)),R=q[3]*6.5;
-    const vg=ctx.createRadialGradient(q[0],q[1]-q[3]*1.2,R*.25,q[0],q[1]-q[3]*1.2,R);vg.addColorStop(0,'rgba(244,247,249,0)');vg.addColorStop(1,`rgba(244,247,249,${.72*k})`);ctx.fillStyle=vg;ctx.fillRect(0,0,W,H)}
-  // --- water-sharing arcs
-  [['liwa','gh'],['quaa','rm']].forEach(([a,b],k)=>{const A=SITES.find(s=>s.id===a),B=SITES.find(s=>s.id===b),ax=toX(A.lon),az=toZ(A.lat),bx=toX(B.lon),bz=toZ(B.lat);
-    const pt=u=>{const x=ax+(bx-ax)*u,z=az+(bz-az)*u;return P(x,terrainH(x,z)*boot+Math.sin(u*Math.PI)*2.6,z)};
-    ctx.beginPath();for(let i=0;i<=40;i++){const q=pt(i/40);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}ctx.strokeStyle='rgba(229,148,0,.45)';ctx.setLineDash([3,5]);ctx.stroke();ctx.setLineDash([]);
-    for(let m=0;m<3;m++){const u=((t*.00022+k*.4+m*.33)%1),q=pt(u);ctx.fillStyle='#e59400';ctx.beginPath();ctx.arc(q[0],q[1],2.6,0,7);ctx.fill()}});
-  // --- beacons (far → near)
-  const order=[...SITES].sort((a,b)=>P(toX(b.lon),0,toZ(b.lat))[2]-P(toX(a.lon),0,toZ(a.lat))[2]);
-  order.forEach(s=>{
-    const x=toX(s.lon),z=toZ(s.lat),h=terrainH(x,z)*boot,d=daysAt(s),st=stOf(s),col=hex2(COL[st]),isSel=selected===s,isHov=hover===s;
-    const A=(selected&&!isSel)?.22:1;ctx.globalAlpha=A;
-    const bh=(isSel&&t-selT>900?1.6:(2.4+Math.max(0,Math.min(1,1-d/150))*4))*boot;
-    const base=P(x,h,z),top=P(x,h+bh,z),aq=P(x,AQ,z);
-    // drill column down to aquifer with water level fill
-    const lvl=Math.max(.05,Math.min(1,d/150)),wl=P(x,AQ+lvl*(h-AQ)*.85,z);
-    ctx.strokeStyle='rgba(13,31,42,.18)';ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(base[0],base[1]);ctx.lineTo(aq[0],aq[1]);ctx.stroke();ctx.setLineDash([]);
-    ctx.strokeStyle='rgba(40,110,220,.75)';ctx.lineWidth=isSel?4:3;ctx.beginPath();ctx.moveTo(aq[0],aq[1]);ctx.lineTo(wl[0],wl[1]);ctx.stroke();
-    ctx.fillStyle='rgba(40,110,220,.9)';ctx.beginPath();ctx.ellipse(wl[0],wl[1],5,2,0,0,7);ctx.fill();
-    // ground rings
-    const ring=(R,a,w,dash)=>{ctx.beginPath();for(let k=0;k<=40;k++){const an=k/40*Math.PI*2,q=P(x+Math.cos(an)*R,h+.03,z+Math.sin(an)*R);k?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}ctx.strokeStyle=rgba(col,a);ctx.lineWidth=w;if(dash)ctx.setLineDash([3,4]);ctx.stroke();ctx.setLineDash([])};
-    const ph=((t*.0009)+SITES.indexOf(s)*.27)%1;
-    ring(.35+ph*(isSel?3.4:1.9),(1-ph)*.8,isSel?2:1.3,s.sensor==='off');
-    if(isSel){ring(.35+((ph+.5)%1)*3.4,(1-(ph+.5)%1)*.8,2,s.sensor==='off');
-      // rotating hex lock-on ring
-      ctx.beginPath();for(let k=0;k<=6;k++){const an=k/6*Math.PI*2+t*.001,q=P(x+Math.cos(an)*1.3,h+.05,z+Math.sin(an)*1.3);k?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}ctx.strokeStyle=rgba(col,.9);ctx.lineWidth=1.6;ctx.stroke()}
-    // light beam
-    const gr=ctx.createLinearGradient(base[0],base[1],top[0],top[1]);gr.addColorStop(0,rgba(col,.95));gr.addColorStop(1,rgba(col,0));
-    ctx.strokeStyle=gr;ctx.lineWidth=isSel||isHov?7:4.5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(base[0],base[1]);ctx.lineTo(top[0],top[1]);ctx.stroke();
-    ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(base[0],base[1]);ctx.lineTo(top[0]*.3+base[0]*.7,top[1]*.3+base[1]*.7);ctx.stroke();ctx.lineCap='butt';
-    ctx.fillStyle=rgba(col,1);ctx.beginPath();ctx.arc(base[0],base[1],isSel?6:4.5,0,7);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(base[0],base[1],isSel?2.5:1.8,0,7);ctx.fill();
-    // floating rotating diamond
-    const fy=Math.sin(t*.0028+SITES.indexOf(s))*.3,dm=P(x,h+bh+.5+fy,z);
-    ctx.save();ctx.translate(dm[0],dm[1]);ctx.rotate(t*.0016);ctx.strokeStyle=rgba(col,1);ctx.lineWidth=1.8;ctx.strokeRect(-5,-5,10,10);ctx.fillStyle=rgba(col,.2);ctx.fillRect(-5,-5,10,10);ctx.restore();
-    // label pill
-    const name=s.name,sub=`${d>0?dLabel(s,d)+' days':'Dry'} · ${LBL[st]}${s.sensor==='off'?' · sensor off':''}`;
-    ctx.font=`700 ${isSel?12.5:11}px "Public Sans",system-ui,sans-serif`;const w1=ctx.measureText(name).width;ctx.font='600 9.5px "Public Sans",sans-serif';const w2=ctx.measureText(sub).width;
-    const bw=Math.max(w1,w2)+18,lx=dm[0]+12,ly=dm[1]-24;
-    if(!isSel||t-selT<900){ctx.globalAlpha=boot*A;ctx.fillStyle=isSel||isHov?'#fff':'rgba(255,255,255,.88)';ctx.strokeStyle=isSel?rgba(col,1):'rgba(13,31,42,.1)';ctx.lineWidth=isSel?1.5:1;
-    ctx.beginPath();ctx.roundRect(lx,ly,bw,34,8);ctx.fill();ctx.stroke();
-    ctx.fillStyle=rgba(col,1);ctx.fillRect(lx,ly+8,3,18);
-    ctx.fillStyle='#0d1f2a';ctx.font=`700 ${isSel?12.5:11}px "Public Sans",system-ui,sans-serif`;ctx.fillText(name,lx+10,ly+14);
-    ctx.fillStyle=rgba(col,1);ctx.font='600 9.5px "Public Sans",sans-serif';ctx.fillText(sub,lx+10,ly+27);}ctx.globalAlpha=1;
-    screenPos[s.id]={base,top,label:[lx+bw/2,ly+17]};
-  });
-  if(selected)drawFx(selected,t);
-  // --- selection radar pulse
-  pulses=pulses.filter(p=>p.k<1);pulses.forEach(p=>{p.k+=.011;const R=p.k*15;ctx.beginPath();for(let k=0;k<=64;k++){const an=k/64*Math.PI*2,q=P(p.x+Math.cos(an)*R,.1,p.z+Math.sin(an)*R);k?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}ctx.strokeStyle=`rgba(10,154,168,${(1-p.k)*.6})`;ctx.lineWidth=2;ctx.stroke()});
-  // --- compass
-  ctx.save();ctx.translate(W-46,H-210);ctx.fillStyle='#fff';ctx.strokeStyle='rgba(13,31,42,.12)';ctx.beginPath();ctx.arc(0,0,20,0,7);ctx.fill();ctx.stroke();ctx.rotate(-cam.yaw);ctx.fillStyle='#e5394f';ctx.beginPath();ctx.moveTo(0,-14);ctx.lineTo(4.5,0);ctx.lineTo(-4.5,0);ctx.fill();ctx.fillStyle='#8aa0ab';ctx.beginPath();ctx.moveTo(0,14);ctx.lineTo(4.5,0);ctx.lineTo(-4.5,0);ctx.fill();ctx.restore();
-  ctx.fillStyle='#5d7380';ctx.font='700 9px "Public Sans",sans-serif';ctx.fillText('N',W-49,H-236);
-  requestAnimationFrame(frame);
-}
-
-/* ======================= ISSUE VISUALS (shown after zoom-in) ======================= */
-function poly(pts,close){ctx.beginPath();pts.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]));if(close)ctx.closePath()}
-function circ(x,y,z,R,n=48){const a=[];for(let k=0;k<=n;k++){const an=k/n*Math.PI*2;a.push(P(x+Math.cos(an)*R,y,z+Math.sin(an)*R))}return a}
-function shaft(x,z,h,fill,fillCol){ // cut-away well shaft from ground to aquifer, with water column
-  const w=.42,L=[P(x-w,h,z),P(x-w,AQ,z)],Rr=[P(x+w,h,z),P(x+w,AQ,z)];
-  ctx.fillStyle='rgba(194,160,110,.18)';poly([L[0],Rr[0],Rr[1],L[1]],true);ctx.fill();
-  ctx.strokeStyle='rgba(13,31,42,.45)';ctx.lineWidth=1.4;poly(L);ctx.stroke();poly(Rr);ctx.stroke();
-  const wy=AQ+(h-AQ)*fill,W1=P(x-w,wy,z),W2=P(x+w,wy,z);
-  const g=ctx.createLinearGradient(0,W1[1],0,L[1][1]);g.addColorStop(0,fillCol||'rgba(40,120,230,.75)');g.addColorStop(1,'rgba(20,70,170,.85)');
-  ctx.fillStyle=g;poly([W1,W2,Rr[1],L[1]],true);ctx.fill();
-  ctx.fillStyle='rgba(255,255,255,.9)';ctx.beginPath();ctx.ellipse((W1[0]+W2[0])/2,W1[1],Math.abs(W2[0]-W1[0])/2,3,0,0,7);ctx.fill();
-  return wy}
-function arrow(q,dir,col,size=7){ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(q[0],q[1]+dir*size);ctx.lineTo(q[0]-size*.8,q[1]-dir*size*.4);ctx.lineTo(q[0]+size*.8,q[1]-dir*size*.4);ctx.closePath();ctx.fill()}
-function drawFx(s,t){
-  const k=Math.min(1,Math.max(0,(t-selT-1100)/700));if(k<=0)return;const a=ease(k);
-  const x=toX(s.lon),z=toZ(s.lat),h=terrainH(x,z),st=stOf(s),c=COL[st],col=hex2(c);
-  ctx.save();ctx.globalAlpha=a;
-  // impact zone on the ground
-  ctx.fillStyle=rgba(col,.08);poly(circ(x,h+.02,z,2.4),true);ctx.fill();ctx.strokeStyle=rgba(col,.55);ctx.setLineDash([5,5]);ctx.lineWidth=1.5;poly(circ(x,h+.02,z,2.4));ctx.stroke();ctx.setLineDash([]);
-  const T=t*.001;
-  if(s.fx==='drain'){ // water level visibly dropping inside the shaft
-    const lv=.62-.42*((T*.18)%1);shaft(x,z,h,lv);
-    for(let i=0;i<3;i++){const u=(T*.6+i/3)%1,q=P(x+.95,h-.3-u*(h-AQ)*.7,z);ctx.globalAlpha=a*(1-u);arrow(q,1,c,7)}ctx.globalAlpha=a;
-    // dried-out ring
-    for(let i=0;i<26;i++){const an=i/26*Math.PI*2,q=P(x+Math.cos(an)*1.7,h+.02,z+Math.sin(an)*1.7);ctx.fillStyle='rgba(170,115,40,.7)';ctx.fillRect(q[0]-2,q[1]-1,4,2)}
-  }
-  if(s.fx==='crowd'){ // 11 herds converging on one well
-    shaft(x,z,h,.42);
-    for(let i=0;i<11;i++){const an=i/11*Math.PI*2+.3,u=(T*.12+i*.091)%1,R=5.2-u*4.4;
-      const hx=x+Math.cos(an)*R,hz=z+Math.sin(an)*R,hy=terrainH(hx,hz)+.05;
-      ctx.strokeStyle='rgba(170,115,40,.25)';poly([P(x+Math.cos(an)*5.2,hy,z+Math.sin(an)*5.2),P(x+Math.cos(an)*.8,h,z+Math.sin(an)*.8)]);ctx.stroke();
-      for(let m=0;m<4;m++){const q=P(hx+Math.cos(m*1.7)*.18,hy,hz+Math.sin(m*2.3)*.18);ctx.fillStyle='rgba(120,75,30,.9)';ctx.beginPath();ctx.arc(q[0],q[1],2.3,0,7);ctx.fill()}}
-    ctx.strokeStyle='rgba(170,115,40,.6)';ctx.setLineDash([2,4]);poly(circ(x,h+.02,z,3.6));ctx.stroke();ctx.setLineDash([]);
-  }
-  if(s.fx==='salt'){ // salty water rising from the deep layer
-    shaft(x,z,h,.55,'rgba(120,150,200,.7)');
-    for(let i=0;i<22;i++){const u=(T*.25+i/22)%1,q=P(x+Math.sin(i*2.1)*.3,AQ-1.2+u*(h-AQ+1.2)*.6,z);ctx.fillStyle=`rgba(229,148,0,${.9*(1-u*.6)})`;ctx.beginPath();ctx.arc(q[0],q[1],2.2,0,7);ctx.fill()}
-    const d1=P(x-1.6,AQ-1.2,z),d2=P(x+1.6,AQ-1.2,z);ctx.strokeStyle='rgba(229,148,0,.7)';ctx.lineWidth=3;poly([d1,d2]);ctx.stroke();ctx.fillStyle='rgba(229,148,0,.9)';ctx.font='700 9px "Public Sans",sans-serif';ctx.fillText('BRACKISH LAYER',d2[0]+6,d2[1]+3);
-  }
-  if(s.fx==='sensor'){ // dead sensor + satellite taking over
-    const g=P(x,h+.6,z),blink=Math.sin(T*6)>0;
-    ctx.fillStyle='#fff';ctx.strokeStyle=c;ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(g[0]-12,g[1]-12,24,24,5);ctx.fill();ctx.stroke();
-    if(blink){ctx.strokeStyle=COL.act;ctx.lineWidth=3;poly([[g[0]-6,g[1]-6],[g[0]+6,g[1]+6]]);ctx.stroke();poly([[g[0]+6,g[1]-6],[g[0]-6,g[1]+6]]);ctx.stroke()}
-    const sat=P(x-1.8,h+4.2,z-.6);ctx.save();ctx.translate(sat[0],sat[1]);ctx.rotate(.3);ctx.fillStyle='#0a9aa8';ctx.fillRect(-5,-4,10,8);ctx.fillStyle='rgba(40,110,220,.85)';ctx.fillRect(-21,-3,14,6);ctx.fillRect(7,-3,14,6);ctx.restore();
-    ctx.fillStyle='#0a9aa8';ctx.font='700 9px "Public Sans",sans-serif';ctx.fillText('SENTINEL-1 RADAR',sat[0]+24,sat[1]+3);
-    const ring=circ(x,h+.03,z,1.4,24);ctx.strokeStyle='rgba(10,154,168,.35)';ring.forEach((q,i)=>{if(i%3)return;poly([sat,q]);ctx.stroke()});
-    const u=(T*.5)%1;ctx.strokeStyle=`rgba(10,154,168,${1-u})`;ctx.lineWidth=2;poly(circ(x,h+.03,z,.3+u*1.6,32));ctx.stroke();
-  }
-  if(s.fx==='share'){ // capacity ring filling as herds arrive from Hameem
-    shaft(x,z,h,.86);
-    const fill=.55+.1*Math.sin(T);ctx.strokeStyle=rgba(col,.25);ctx.lineWidth=6;poly(circ(x,h+.03,z,1.9,64));ctx.stroke();
-    ctx.strokeStyle=rgba(col,.95);poly(circ(x,h+.03,z,1.9,64).slice(0,Math.round(64*fill)));ctx.stroke();ctx.lineWidth=1;
-    const L=SITES.find(q=>q.id==='liwa'),lx=toX(L.lon),lz=toZ(L.lat);
-    for(let m=0;m<6;m++){const u=(T*.15+m/6)%1,px=lx+(x-lx)*u,pz=lz+(z-lz)*u,q=P(px,terrainH(px,pz)+Math.sin(u*Math.PI)*2.6,pz);ctx.fillStyle='rgba(120,75,30,.9)';ctx.beginPath();ctx.arc(q[0],q[1],3,0,7);ctx.fill()}
-  }
-  if(s.fx==='rain'){ // storm cloud, rain, water rising
-    const lv=.5+.3*((T*.15)%1);shaft(x,z,h,lv);
-    for(let i=0;i<5;i++){const q=P(x-1.2+i*.6,h+4.4+Math.sin(i)*.25,z);ctx.fillStyle='rgba(150,170,190,.55)';ctx.beginPath();ctx.ellipse(q[0],q[1],q[3]*.75,q[3]*.42,0,0,7);ctx.fill()}
-    ctx.strokeStyle='rgba(40,110,220,.6)';ctx.lineWidth=1.4;
-    for(let i=0;i<40;i++){const rx=x-1.4+((i*37)%28)/10,rz=z-.8+((i*53)%16)/10,u=(T*1.2+i*.137)%1,yy=h+4.1-u*4.1,q1=P(rx,yy,rz),q2=P(rx,yy-.35,rz);poly([q1,q2]);ctx.stroke()}
-    for(let i=0;i<3;i++){const u=(T*.5+i/3)%1,q=P(x+.95,AQ+u*(h-AQ)*.7,z);ctx.globalAlpha=a*(1-u);arrow(q,-1,'#12a26a',7)}ctx.globalAlpha=a;
-  }
-  // ---- callout card pinned to the site
-  const anchor=P(x,h+2.2,z);let cx=anchor[0]+70,cy=anchor[1]-120;const cw=250,chh=84;
-  cx=Math.max(16,Math.min(W-cw-16,cx));cy=Math.max(150,Math.min(H-chh-130,cy));
-  ctx.strokeStyle=c;ctx.lineWidth=1.5;poly([anchor,[cx,cy+chh/2]]);ctx.stroke();ctx.fillStyle=c;ctx.beginPath();ctx.arc(anchor[0],anchor[1],4,0,7);ctx.fill();
-  ctx.shadowColor='rgba(13,31,42,.18)';ctx.shadowBlur=24;ctx.shadowOffsetY=8;ctx.fillStyle='#fff';ctx.beginPath();ctx.roundRect(cx,cy,cw,chh,12);ctx.fill();ctx.shadowColor='transparent';
-  ctx.strokeStyle=rgba(col,.5);ctx.lineWidth=1.2;ctx.stroke();ctx.fillStyle=c;ctx.beginPath();ctx.roundRect(cx,cy,5,chh,[12,0,0,12]);ctx.fill();
-  ctx.font='700 9px "Public Sans",sans-serif';ctx.fillStyle=c;ctx.fillText((st==='ok'?'Status at ':'Problem found at ')+s.name,cx+16,cy+18);
-  ctx.font='800 14px "Public Sans",system-ui,sans-serif';ctx.fillStyle='#0d1f2a';ctx.fillText(s.head,cx+16,cy+37);
-  ctx.font='700 17px "Public Sans",sans-serif';ctx.fillStyle=c;ctx.fillText(s.stat,cx+16,cy+60);
-  ctx.font='500 10px "Public Sans",sans-serif';ctx.fillStyle='#5d7380';ctx.fillText(s.sub,cx+16,cy+76);
-  ctx.restore();
-}
+window.SAQI_APP={SITES,statusOf:s=>stOf(s),daysLabel:s=>dLabel(s,daysAt(s)),onPick:s=>{if(touring)stopTour();select(s,true)},onBack:()=>$('#resetBtn').click()};
+dispatchEvent(new Event('saqi-app-ready'));
 
 /* ======================= selection & tour ======================= */
 function select(s,talk){
@@ -1127,7 +968,9 @@ $('#homeBtn').onclick=goHome;
 $('#enterVoice').onclick=()=>enter(true);$('#enterSilent').onclick=()=>enter(false);
 addEventListener('keydown',e=>{if(e.key==='Escape'){$('#how').classList.add('hide');if(touring)stopTour()}});
 
-resize();computeHeat();setDate();renderList();emptyDetail();bootT0=performance.now();requestAnimationFrame(frame);
+computeHeat();setDate();renderList();emptyDetail();
 </script>
+<script type="importmap">{"imports":{"three":"./vendor/three/three.module.min.js","three/addons/":"./vendor/three/addons/"}}</script>
+<script type="module" src="map3d/main.js"></script>
 </body>
 </html>
