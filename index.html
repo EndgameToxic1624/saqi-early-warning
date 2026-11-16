@@ -5,643 +5,661 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SAQI — Early Warnings for Desert Water Sources</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;600;800&family=Noto+Kufi+Arabic:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&family=Noto+Kufi+Arabic:wght@500;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#03070d; --bg2:#071320; --holo:#00f0ff; --holo2:#5cf6ff; --holoDim:rgba(0,240,255,.18);
-  --sand:#ffb547; --red:#ff3d5a; --amber:#ffb547; --green:#2dffa4; --text:#d8f6ff; --mute:#7aa5b5;
-  --panel:rgba(4,22,34,.72); --line:rgba(0,240,255,.28);
+  --bg:#f4f7f9; --panel:#ffffff; --panel2:#f7fafb; --line:#e2e9ed; --line2:#cfdbe1;
+  --text:#0d1f2a; --muted:#5d7380; --soft:#8aa0ab;
+  --teal:#0a9aa8; --teal2:#06808c; --tealBg:#e6f6f7;
+  --act:#e5394f; --warn:#e59400; --ok:#12a26a; --off:#8a98a2;
+  --mono:'IBM Plex Mono',ui-monospace,Consolas,monospace; --sans:'Inter',system-ui,sans-serif;
+  --shadow:0 1px 2px rgba(13,31,42,.04),0 6px 24px rgba(13,31,42,.06);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{background:radial-gradient(1200px 700px at 50% 20%,#0a2233 0%,var(--bg) 60%);color:var(--text);font-family:Inter,system-ui,sans-serif;overflow-x:hidden}
-.mono{font-family:"JetBrains Mono",ui-monospace,monospace}
-.orb{font-family:Orbitron,Inter,sans-serif;letter-spacing:.06em}
-.ar{font-family:"Noto Kufi Arabic",Tahoma,sans-serif;direction:rtl}
-body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:50;
-  background:repeating-linear-gradient(0deg,rgba(0,240,255,.035) 0 1px,transparent 1px 3px);mix-blend-mode:screen}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);overflow:hidden;font-size:13px}
+button{font:inherit;cursor:pointer;color:inherit}
+button:focus-visible,select:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.mono{font-family:var(--mono)}
+.ar{font-family:'Noto Kufi Arabic',Tahoma,sans-serif;direction:rtl}
 
-/* ---------- top bar ---------- */
-header{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:18px;padding:12px 24px;
-  background:linear-gradient(180deg,rgba(3,7,13,.95),rgba(3,7,13,.6));backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
-.logo{display:flex;align-items:center;gap:10px;font-weight:900}
-.logo .drop{width:26px;height:26px;border:2px solid var(--holo);border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 0 14px var(--holo);position:relative}
-.logo .drop::after{content:"";position:absolute;inset:5px;border-radius:50%;background:var(--holo);animation:pulse 2s infinite}
-.logo span{font-size:20px;color:var(--holo);text-shadow:0 0 12px var(--holo)}
-.logo small{display:block;font-size:10px;color:var(--mute);letter-spacing:.2em;font-family:"JetBrains Mono",monospace;font-weight:400}
-nav{margin-left:auto;display:flex;gap:18px;font-size:13px}
-nav a{color:var(--mute);text-decoration:none;transition:.2s}
-nav a:hover{color:var(--holo)}
-.btn{border:1px solid var(--holo);background:rgba(0,240,255,.08);color:var(--holo);padding:9px 16px;font:600 12px "JetBrains Mono",monospace;letter-spacing:.08em;cursor:pointer;text-transform:uppercase;transition:.2s;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
-.btn:hover{background:var(--holo);color:#001018;box-shadow:0 0 24px var(--holo)}
-.btn.solid{background:var(--holo);color:#001018}
-.btn.warn{border-color:var(--sand);color:var(--sand);background:rgba(255,181,71,.08)}
-.btn.warn:hover{background:var(--sand);color:#1a0d00;box-shadow:0 0 24px var(--sand)}
+.app{height:100dvh;min-height:660px;display:grid;grid-template-columns:300px minmax(380px,1fr) 380px}
 
-/* ---------- hero / hologram ---------- */
-#hero{position:relative;height:calc(100vh - 58px);min-height:640px;display:grid;grid-template-columns:300px 1fr 380px;gap:0}
-#stage{position:relative;overflow:hidden}
-#holo{position:absolute;inset:0;width:100%;height:100%;cursor:grab}
+/* ---------- sidebar ---------- */
+.sidebar,.details{background:var(--panel);overflow-y:auto;scrollbar-width:thin;scrollbar-color:#cfdbe1 transparent;position:relative;z-index:5}
+.sidebar{border-right:1px solid var(--line);display:flex;flex-direction:column}
+.details{border-left:1px solid var(--line);display:flex;flex-direction:column}
+.brand{padding:24px 22px 20px;border-bottom:1px solid var(--line)}
+.brandmark{display:flex;align-items:center;gap:11px}
+.brandmark .logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#12c3cf,#0a7f8c);display:grid;place-items:center;box-shadow:0 6px 18px rgba(10,154,168,.35)}
+.brandmark .logo svg{width:18px;height:18px}
+.brandmark b{font-size:18px;font-weight:800;letter-spacing:.04em}
+.brandmark b span{color:var(--teal)}
+.brandmark small{display:block;font:500 9px var(--mono);letter-spacing:.16em;color:var(--soft);margin-top:2px}
+.brand p{margin-top:12px;color:var(--muted);line-height:1.6;font-size:12px}
+.overline{font:600 9px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--soft)}
+.side-section{padding:18px 20px 8px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.section-label{font:600 10px var(--mono);letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+.count{font:600 10px var(--mono);color:var(--teal2);background:var(--tealBg);padding:4px 8px;border-radius:20px}
+.subtle{font:10px/1.5 var(--mono);color:var(--soft);margin-top:8px}
+.site-list{display:flex;flex-direction:column;gap:6px;padding:4px 14px 14px}
+.site{width:100%;background:var(--panel);border:1px solid var(--line);padding:11px 11px;border-radius:12px;text-align:left;display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;transition:all .25s}
+.site:hover{border-color:var(--line2);transform:translateX(2px);box-shadow:var(--shadow)}
+.site.active{border-color:var(--teal);background:linear-gradient(90deg,var(--tealBg),#fff 70%);box-shadow:inset 3px 0 0 var(--teal),var(--shadow)}
+.dot{width:11px;height:11px;border-radius:50%;background:var(--dot);box-shadow:0 0 0 4px color-mix(in srgb,var(--dot) 18%,transparent);margin-left:3px}
+.dot.off{background:#fff;border:2px dashed var(--dot)}
+.site strong{display:block;font-size:12.5px;font-weight:650;margin-bottom:2px}
+.site small{font:9.5px var(--mono);color:var(--soft)}
+.site .days{font:700 13px var(--mono);text-align:right}
+.site .days small{display:block;font-size:8.5px;font-weight:500;letter-spacing:.06em}
+.sidebar-bottom{margin-top:auto;padding:16px 20px 20px;border-top:1px solid var(--line);background:var(--panel2)}
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.metric{border:1px solid var(--line);background:#fff;padding:10px 12px;border-radius:10px}
+.metric strong{display:block;font:700 20px var(--mono)}
+.metric span{font:9px var(--mono);color:var(--soft);letter-spacing:.06em}
+.voicebox{margin-top:4px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px 12px}
+.voicebox select{width:100%;margin-top:7px;border:1px solid var(--line2);border-radius:8px;padding:7px 8px;font:11px var(--sans);background:#fff;color:var(--text)}
+.voicebox .row2{display:flex;gap:8px;align-items:center;margin-top:8px;font:10px var(--mono);color:var(--muted)}
+.voicebox input[type=range]{flex:1;accent-color:var(--teal)}
+.voicebox .tip{font:9.5px/1.5 var(--mono);color:var(--soft);margin-top:7px}
+.btnrow{display:flex;gap:8px;margin-top:12px}
+.btn{flex:1;border:1px solid var(--teal);background:var(--teal);color:#fff;border-radius:10px;padding:11px 10px;font:700 10.5px var(--mono);letter-spacing:.08em;transition:.2s}
+.btn:hover{background:var(--teal2);transform:translateY(-1px);box-shadow:0 6px 16px rgba(10,154,168,.3)}
+.btn.ghost{background:#fff;color:var(--teal2)}
+.btn.ghost:hover{background:var(--tealBg);box-shadow:none}
+.toggle{width:34px;height:20px;border-radius:20px;background:var(--line2);position:relative;border:0;transition:.2s;flex:none}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle.on{background:var(--teal)}.toggle.on::after{left:17px}
+
+/* ---------- main / hologram ---------- */
+.main{position:relative;min-width:0;overflow:hidden;background:radial-gradient(ellipse at 50% 55%,#ffffff 0%,#eef6f8 45%,#e2eef2 100%)}
+.main::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(10,154,168,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(10,154,168,.06) 1px,transparent 1px);background-size:44px 44px;pointer-events:none}
+#holo{position:absolute;inset:0;width:100%;height:100%;cursor:grab;touch-action:none}
 #holo:active{cursor:grabbing}
-.stageTitle{position:absolute;top:22px;left:0;right:0;text-align:center;pointer-events:none}
-.stageTitle h1{font-size:clamp(20px,2.6vw,34px);font-weight:900;color:#eaffff;text-shadow:0 0 18px rgba(0,240,255,.7)}
-.stageTitle p{color:var(--mute);font-size:13px;margin-top:6px}
-.glitch{animation:glitch 6s infinite}
-.projector{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:60%;height:70px;
-  background:radial-gradient(ellipse at 50% 100%,rgba(0,240,255,.35),transparent 70%);pointer-events:none;filter:blur(4px)}
-.hud-corner{position:absolute;width:40px;height:40px;border:2px solid var(--holo);opacity:.6;pointer-events:none}
-.hud-corner.tl{top:84px;left:16px;border-right:0;border-bottom:0}.hud-corner.tr{top:84px;right:16px;border-left:0;border-bottom:0}
-.hud-corner.bl{bottom:96px;left:16px;border-right:0;border-top:0}.hud-corner.br{bottom:96px;right:16px;border-left:0;border-top:0}
+.scanline{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.scanline::after{content:"";position:absolute;left:0;right:0;height:120px;top:-120px;background:linear-gradient(180deg,transparent,rgba(10,154,168,.07),transparent);animation:sweep 7s linear infinite}
+@keyframes sweep{to{top:110%}}
+.map-top{position:absolute;top:20px;left:24px;right:24px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;pointer-events:none}
+.map-top h1{font-size:clamp(18px,2vw,26px);font-weight:800;letter-spacing:-.03em;margin-top:4px}
+.map-top h1 span{color:var(--teal)}
+.liveflag{background:#fff;border:1px solid var(--line);border-radius:20px;padding:8px 12px;font:600 9px var(--mono);letter-spacing:.12em;color:var(--muted);white-space:nowrap;box-shadow:var(--shadow)}
+.liveflag b{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--warn);margin-right:7px;vertical-align:middle;animation:blink 1.6s infinite}
+@keyframes blink{50%{opacity:.25}}
+.focus-tag{position:absolute;left:50%;top:92px;transform:translate(-50%,-10px);opacity:0;transition:.4s;background:#fff;border:1px solid var(--teal);border-radius:10px;padding:9px 16px;text-align:center;pointer-events:none;box-shadow:0 8px 28px rgba(10,154,168,.18)}
+.focus-tag.show{opacity:1;transform:translate(-50%,0)}
+.focus-tag strong{display:block;font:700 11px var(--mono);letter-spacing:.14em;color:var(--teal2)}
+.focus-tag span{display:block;font:10px var(--mono);color:var(--soft);margin-top:3px}
+.hint{position:absolute;top:92px;left:50%;transform:translateX(-50%);font:600 10px var(--mono);letter-spacing:.14em;color:var(--soft);pointer-events:none;transition:opacity .4s;white-space:nowrap}
+.map-left-meta{position:absolute;left:20px;bottom:110px;display:flex;flex-direction:column;gap:7px;pointer-events:none}
+.chip{background:rgba(255,255,255,.88);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:600 9.5px var(--mono);color:var(--muted);letter-spacing:.08em;width:max-content;backdrop-filter:blur(6px)}
+.map-buttons{position:absolute;right:20px;bottom:24px;display:flex;flex-direction:column;gap:7px}
+.map-buttons button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:#fff;font:600 18px var(--mono);color:var(--text);box-shadow:var(--shadow);transition:.2s}
+.map-buttons button:hover{border-color:var(--teal);color:var(--teal)}
+#timeline{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);width:min(440px,56%);background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:14px;padding:10px 16px 8px;box-shadow:var(--shadow);backdrop-filter:blur(6px)}
+#timeline .row{font:600 9.5px var(--mono);color:var(--muted);letter-spacing:.06em}
+#timeline b{color:var(--teal2)}
+#timeline input{width:100%;accent-color:var(--teal);margin:6px 0 2px}
+#timeline .ticks{display:flex;justify-content:space-between;font:9px var(--mono);color:var(--soft)}
+#caption{position:absolute;left:50%;bottom:104px;transform:translate(-50%,10px);width:min(640px,86%);background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:14px;padding:12px 16px;box-shadow:0 10px 30px rgba(13,31,42,.1);opacity:0;transition:.35s;pointer-events:none;display:flex;gap:12px;align-items:flex-start}
+#caption.on{opacity:1;transform:translate(-50%,0)}
+#caption .avatar{flex:none;width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#12c3cf,#0a7f8c);display:flex;align-items:center;justify-content:center;gap:2px}
+#caption .avatar i{width:3px;height:12px;background:#fff;border-radius:2px;animation:eq .5s infinite alternate}
+#caption .avatar i:nth-child(2){animation-delay:.15s;height:16px}#caption .avatar i:nth-child(3){animation-delay:.3s}
+@keyframes eq{to{height:4px}}
+#caption .who{font:700 9px var(--mono);letter-spacing:.14em;color:var(--teal2);margin-bottom:3px}
+#capText{font-size:13.5px;line-height:1.55;color:var(--text)}
+.toast{position:absolute;z-index:20;top:20px;left:50%;transform:translate(-50%,-20px);opacity:0;background:var(--text);color:#fff;border-radius:10px;padding:12px 18px;font:600 11px var(--mono);transition:.35s;pointer-events:none}
+.toast.show{opacity:1;transform:translate(-50%,0)}
 
-#caption{position:absolute;left:50%;bottom:104px;transform:translateX(-50%);width:min(760px,90%);text-align:center;
-  font-size:15px;line-height:1.5;padding:10px 18px;background:rgba(0,12,20,.75);border:1px solid var(--line);color:#eaffff;
-  opacity:0;transition:opacity .3s;pointer-events:none}
-#caption.on{opacity:1}
-#caption .spk{color:var(--holo);font:600 11px "JetBrains Mono",monospace;letter-spacing:.15em;display:block;margin-bottom:4px}
-#caption .spk i{display:inline-block;width:3px;height:10px;background:var(--holo);margin-left:2px;animation:eq .6s infinite alternate}
-#caption .spk i:nth-child(2){animation-delay:.15s}#caption .spk i:nth-child(3){animation-delay:.3s}
-
-#timeline{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);width:min(640px,88%);padding:12px 16px;background:var(--panel);border:1px solid var(--line)}
-#timeline .row{display:flex;justify-content:space-between;align-items:center;font:12px "JetBrains Mono",monospace;color:var(--mute)}
-#timeline b{color:var(--holo)}
-input[type=range]{width:100%;accent-color:var(--holo);margin-top:6px}
-.stageHint{position:absolute;top:92px;left:50%;transform:translateX(-50%);font:11px "JetBrains Mono",monospace;color:var(--mute);letter-spacing:.12em;pointer-events:none;animation:blink 2.4s infinite}
-
-/* ---------- side panels ---------- */
-aside{background:var(--panel);border-right:1px solid var(--line);padding:18px;overflow:auto;position:relative;z-index:2}
-aside.right{border-right:0;border-left:1px solid var(--line)}
-.label{font:600 10px "JetBrains Mono",monospace;letter-spacing:.2em;color:var(--mute);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
-.label::before{content:"";width:6px;height:6px;background:var(--holo);box-shadow:0 0 8px var(--holo)}
-.site{display:flex;align-items:center;gap:10px;padding:10px;margin-bottom:6px;border:1px solid transparent;cursor:pointer;transition:.2s;background:rgba(0,240,255,.03)}
-.site:hover,.site.active{border-color:var(--holo);background:rgba(0,240,255,.1)}
-.dot{width:10px;height:10px;border-radius:50%;flex:none;box-shadow:0 0 10px currentColor;background:currentColor}
-.site .nm{font-weight:600;font-size:13px}
-.site .sub{font:11px "JetBrains Mono",monospace;color:var(--mute)}
-.site .days{margin-left:auto;font:700 13px "JetBrains Mono",monospace;text-align:right}
-.site .days small{display:block;font-size:9px;color:var(--mute);font-weight:400}
-.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0}
-.stat{border:1px solid var(--line);padding:10px;background:rgba(0,0,0,.25)}
-.stat b{display:block;font:700 22px Orbitron,sans-serif}
-.stat span{font:10px "JetBrains Mono",monospace;color:var(--mute);letter-spacing:.08em}
-.legend{font:11px "JetBrains Mono",monospace;color:var(--mute);line-height:2}
-.legend .dot{display:inline-block;width:8px;height:8px;margin-right:6px;vertical-align:middle}
-
-/* detail */
-#detail .empty{color:var(--mute);font-size:13px;line-height:1.6;padding-top:30px;text-align:center}
-#detail .empty .scan{width:120px;height:120px;margin:0 auto 18px;border:1px dashed var(--holo);border-radius:50%;position:relative;animation:spin 8s linear infinite}
-#detail .empty .scan::after{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,rgba(0,240,255,.5),transparent 30%)}
-.dHead h2{font-size:20px;font-weight:800}
-.dHead .ar{color:var(--mute);font-size:14px;margin-top:2px;text-align:left}
-.badge{display:inline-block;font:700 10px "JetBrains Mono",monospace;letter-spacing:.15em;padding:4px 8px;border:1px solid currentColor;margin-top:8px}
-.big{display:flex;align-items:flex-end;gap:12px;margin:14px 0 4px}
-.big b{font:900 48px Orbitron,sans-serif;line-height:1}
-.big span{font:12px "JetBrains Mono",monospace;color:var(--mute);padding-bottom:6px}
-.conf{height:6px;background:rgba(255,255,255,.08);margin:8px 0 2px;position:relative}
-.conf i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--holo),var(--green));box-shadow:0 0 10px var(--holo);transition:width .8s}
-.small{font:11px "JetBrains Mono",monospace;color:var(--mute)}
-#chart{width:100%;height:150px;display:block;margin:12px 0;border:1px solid var(--line);background:rgba(0,0,0,.3)}
-.sig{display:grid;grid-template-columns:1fr auto;gap:2px 8px;font:11.5px "JetBrains Mono",monospace;padding:6px 0;border-bottom:1px dashed rgba(0,240,255,.15)}
-.sig .v{text-align:right}
-.ok{color:var(--green)}.stale{color:var(--amber)}.off{color:var(--red)}
-.phone{margin:14px auto 6px;width:210px;border:2px solid #355;border-radius:22px;padding:14px 12px 18px;background:#0b1214;position:relative;box-shadow:0 0 30px rgba(0,240,255,.15)}
-.phone::before{content:"";display:block;width:50px;height:4px;background:#355;border-radius:4px;margin:0 auto 10px}
-.screen{background:#9fb88a;color:#122;border-radius:4px;padding:8px;font:11px/1.45 "JetBrains Mono",monospace;min-height:120px;box-shadow:inset 0 0 12px rgba(0,0,0,.4)}
-.screen .from{font-weight:700;border-bottom:1px solid rgba(0,0,0,.3);margin-bottom:5px;padding-bottom:3px;display:flex;justify-content:space-between}
-.screen .ar{font-size:11.5px;line-height:1.7;margin-bottom:6px}
-.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:10px}
-.keys i{height:12px;background:#1d2a2d;border-radius:4px}
-.action{border-left:3px solid var(--sand);padding:8px 10px;background:rgba(255,181,71,.07);font-size:12.5px;line-height:1.5;margin-top:10px}
-.action b{color:var(--sand);font:700 10px "JetBrains Mono",monospace;letter-spacing:.15em;display:block;margin-bottom:3px}
-.rowBtns{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
-.fade-in{animation:fadeIn .5s ease both}
-
-/* ---------- sections ---------- */
-section{padding:90px 6vw;position:relative}
-section h2.sec{font:900 clamp(24px,3vw,38px) Orbitron,sans-serif;color:#eaffff;text-shadow:0 0 16px rgba(0,240,255,.5);margin-bottom:10px}
-section p.lead{color:var(--mute);max-width:760px;line-height:1.6;margin-bottom:40px}
-.pipe{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;position:relative}
-.step{border:1px solid var(--line);background:var(--panel);padding:18px;position:relative;opacity:0;transform:translateY(20px);transition:.6s}
-.step.vis{opacity:1;transform:none}
-.step .n{font:700 11px "JetBrains Mono",monospace;color:var(--holo);letter-spacing:.2em}
-.step h3{font-size:16px;margin:8px 0}
-.step p{font-size:13px;color:var(--mute);line-height:1.55}
-.step .flow{position:absolute;right:-14px;top:50%;width:14px;height:2px;background:var(--holo);overflow:hidden}
-.step .flow::after{content:"";position:absolute;inset:0;background:#fff;animation:flow 1.2s linear infinite}
-.step:last-child .flow{display:none}
-.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
-.chip{font:10px "JetBrains Mono",monospace;padding:3px 6px;border:1px solid var(--line);color:var(--holo2)}
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-.card{border:1px solid var(--line);background:var(--panel);padding:22px;position:relative;overflow:hidden}
-.card::before{content:"";position:absolute;top:0;left:-100%;width:60%;height:2px;background:linear-gradient(90deg,transparent,var(--holo),transparent);animation:sweep 3.5s infinite}
-.card h3{font-size:17px;margin:10px 0 8px}
-.card p{font-size:13.5px;color:var(--mute);line-height:1.6}
-.card .icon{font:900 28px Orbitron,sans-serif;color:var(--sand)}
-.ladder{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--line)}
-.rung{padding:20px;border-right:1px solid var(--line);background:var(--panel)}
-.rung:last-child{border-right:0}
-.rung h4{font:700 14px Orbitron,sans-serif;margin-bottom:6px}
-.rung .rule{font:11px "JetBrains Mono",monospace;color:var(--holo2);margin-bottom:8px}
-.rung p{font-size:13px;color:var(--mute);line-height:1.5}
-.who{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-.who .card h3{font-size:15px}
-.tag{font:10px "JetBrains Mono",monospace;color:var(--sand);letter-spacing:.15em}
-footer{padding:40px 6vw;border-top:1px solid var(--line);color:var(--mute);font-size:12px;line-height:1.7}
-footer b{color:var(--text)}
-
-#intro{position:fixed;inset:0;z-index:100;background:rgba(2,6,10,.94);display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:20px}
-#intro h1{font:900 clamp(40px,8vw,90px) Orbitron,sans-serif;color:var(--holo);text-shadow:0 0 30px var(--holo)}
-#intro .ar{font-size:26px;color:var(--sand);margin:4px 0 14px;direction:rtl}
-#intro p{color:var(--mute);max-width:560px;line-height:1.6;margin-bottom:26px}
-#intro .boot{font:12px "JetBrains Mono",monospace;color:var(--holo2);margin-bottom:24px;min-height:80px;text-align:left;white-space:pre}
-
-@keyframes pulse{50%{opacity:.3}}
+/* ---------- details ---------- */
+.top-control{padding:24px 24px 18px;border-bottom:1px solid var(--line)}
+.eyebrow{font:700 10px var(--mono);letter-spacing:.14em;color:var(--teal2)}
+.top-control h2{font-size:24px;font-weight:800;letter-spacing:-.03em;margin:8px 0 2px}
+.top-control .arn{color:var(--soft);font-size:13px;text-align:left}
+.top-control .sub{font:10.5px var(--mono);color:var(--muted);margin-top:4px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+.tag{display:inline-flex;align-items:center;gap:6px;border-radius:20px;padding:5px 10px;font:700 9px var(--mono);letter-spacing:.1em;color:var(--c);background:color-mix(in srgb,var(--c) 11%,#fff);border:1px solid color-mix(in srgb,var(--c) 30%,#fff)}
+.tag::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--c)}
+.detail-scroll{padding:0 24px 20px}
+.block{padding:18px 0;border-bottom:1px solid var(--line)}
+.block:last-child{border-bottom:0}
+.btitle{display:flex;justify-content:space-between;font:700 10px var(--mono);letter-spacing:.14em;color:var(--muted);text-transform:uppercase;margin-bottom:12px}
+.btitle strong{color:var(--teal2);font-weight:600}
+.bigval{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+.bigval strong{font:700 44px var(--mono);line-height:.9;letter-spacing:-.04em}
+.bigval strong small{font-size:14px;color:var(--muted);letter-spacing:0;margin-left:4px}
+.bigval .range{font:600 10.5px/1.5 var(--mono);color:var(--muted);text-align:right}
+.confbar{height:6px;border-radius:6px;background:var(--line);margin:12px 0 4px;overflow:hidden}
+.confbar i{display:block;height:100%;width:0;border-radius:6px;background:linear-gradient(90deg,var(--teal),#3fd3a0);transition:width .9s cubic-bezier(.2,.8,.2,1)}
+#chart{width:100%;height:140px;display:block;margin-top:12px}
+.legend{display:flex;justify-content:space-between;font:9.5px var(--mono);color:var(--soft);margin-top:4px}
+.issue{border-left:3px solid var(--c);background:linear-gradient(90deg,color-mix(in srgb,var(--c) 9%,#fff),#fff);padding:12px 14px;border-radius:0 10px 10px 0}
+.issue h3{font-size:14px;margin-bottom:6px}
+.issue p{color:var(--muted);font-size:12px;line-height:1.6}
+.next{display:flex;gap:10px;margin-top:12px;font:10.5px/1.6 var(--mono);color:#8a5a00;background:#fff8ea;border:1px solid #f6e2b8;border-radius:10px;padding:10px 12px}
+.next b{white-space:nowrap}
+.sig{display:grid;grid-template-columns:1fr auto;gap:8px;font:11px var(--mono);padding:8px 0;border-bottom:1px dashed var(--line)}
+.sig:last-child{border-bottom:0}
+.sig .k{color:var(--muted)}
+.sig .v{font-weight:600}
+.v.ok{color:var(--ok)}.v.stale{color:var(--warn)}.v.off{color:var(--act)}
+.steps{list-style:none;display:flex;flex-direction:column;gap:11px}
+.steps li{display:flex;gap:11px;font-size:12px;line-height:1.55;color:var(--muted)}
+.steps .n{flex:none;width:26px;height:26px;border-radius:8px;background:var(--tealBg);color:var(--teal2);font:700 10px var(--mono);display:grid;place-items:center}
+.steps strong{display:block;color:var(--text);font-size:12.5px}
+.sms{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px}
+.sms .hdr{display:flex;justify-content:space-between;font:700 9.5px var(--mono);color:var(--teal2);letter-spacing:.1em;margin-bottom:10px}
+.bubble{background:#fff;border:1px solid var(--line);border-radius:14px 14px 14px 4px;padding:10px 12px;font-size:12.5px;line-height:1.75;margin-bottom:8px;box-shadow:0 2px 6px rgba(13,31,42,.04)}
+.bubble.en{font:11px/1.6 var(--mono);color:var(--muted)}
+.sendbtn{margin-top:12px;width:100%}
+.fine{font:9.5px/1.6 var(--mono);color:var(--soft);margin-top:9px}
+.footer{margin-top:auto;padding:12px 22px;border-top:1px solid var(--line);font:9.5px var(--mono);color:var(--soft);display:flex;justify-content:space-between}
+.loading-overlay{position:absolute;inset:0;z-index:12;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(255,255,255,.7);backdrop-filter:blur(3px);font:700 10.5px var(--mono);letter-spacing:.16em;color:var(--teal2)}
+.loading .loading-overlay{display:flex}
+.spinner{width:40px;height:40px;border-radius:50%;border:3px solid var(--tealBg);border-top-color:var(--teal);animation:spin .9s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-@keyframes blink{50%{opacity:.35}}
-@keyframes eq{to{height:2px}}
-@keyframes flow{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
-@keyframes sweep{to{left:140%}}
-@keyframes fadeIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
-@keyframes glitch{0%,92%,100%{transform:none;opacity:1}93%{transform:translateX(-3px) skewX(8deg);opacity:.7}95%{transform:translateX(3px);opacity:.9}97%{transform:none}}
+.fade{animation:fade .5s ease both}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
-@media (max-width:1100px){
-  #hero{grid-template-columns:1fr;height:auto}
-  #stage{height:78vh;order:-1}
-  aside{max-height:none}
-  .pipe,.grid3,.ladder,.who{grid-template-columns:1fr 1fr}
-  nav{display:none}
-}
-@media (max-width:640px){.pipe,.grid3,.ladder,.who{grid-template-columns:1fr}.step .flow{display:none}}
+/* ---------- intro + modal ---------- */
+.overlay{position:fixed;inset:0;z-index:100;background:rgba(244,247,249,.82);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:20px}
+.overlay.hide{opacity:0;pointer-events:none;transition:opacity .5s}
+.card{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:0 30px 80px rgba(13,31,42,.15);padding:38px;max-width:560px;text-align:center}
+.card .logo{width:64px;height:64px;border-radius:18px;margin:0 auto 18px;background:linear-gradient(135deg,#12c3cf,#0a7f8c);display:grid;place-items:center;box-shadow:0 14px 34px rgba(10,154,168,.4)}
+.card h1{font-size:42px;font-weight:800;letter-spacing:.02em}
+.card h1 span{color:var(--teal)}
+.card .arsub{color:var(--warn);font-size:18px;margin:2px 0 12px}
+.card p{color:var(--muted);line-height:1.65;font-size:14px;margin-bottom:18px}
+.boot{font:11px/1.8 var(--mono);color:var(--teal2);text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-height:126px;margin-bottom:20px;white-space:pre}
+.card .btnrow{max-width:420px;margin:0 auto}
+.modal .card{max-width:980px;text-align:left;max-height:90vh;overflow:auto;padding:30px}
+.modal h2{font-size:24px;font-weight:800;margin-bottom:4px}
+.modal .lead{color:var(--muted);font-size:13px;margin-bottom:18px;line-height:1.6}
+.pipe{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:22px}
+.pstep{border:1px solid var(--line);border-radius:14px;padding:14px;background:var(--panel2);position:relative}
+.pstep .n{font:700 9.5px var(--mono);letter-spacing:.14em;color:var(--teal2)}
+.pstep h4{font-size:13.5px;margin:6px 0 5px}
+.pstep p{font-size:11.5px;color:var(--muted);line-height:1.55}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.chips span{font:9px var(--mono);background:#fff;border:1px solid var(--line);border-radius:6px;padding:2px 6px;color:var(--teal2)}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:22px}
+.rule{border:1px solid var(--line);border-radius:14px;padding:14px}
+.rule h4{font-size:13.5px;margin-bottom:6px}
+.rule p{font-size:12px;color:var(--muted);line-height:1.6}
+.ladder{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.ladder div{padding:14px;border-right:1px solid var(--line)}
+.ladder div:last-child{border-right:0}
+.ladder h4{font:700 12px var(--mono);letter-spacing:.1em;margin-bottom:4px}
+.ladder code{display:block;font:10px var(--mono);color:var(--teal2);margin-bottom:6px}
+.ladder p{font-size:11.5px;color:var(--muted);line-height:1.5}
+.close{position:sticky;top:0;float:right;border:1px solid var(--line);background:#fff;border-radius:10px;width:36px;height:36px;font-size:18px}
+
+@media(max-width:1180px){.app{grid-template-columns:260px minmax(320px,1fr) 340px}}
+@media(max-width:900px){body{overflow:auto}.app{display:flex;flex-direction:column;height:auto}.main{height:72vh;order:-1}.sidebar,.details{overflow:visible}.pipe,.grid3,.ladder{grid-template-columns:1fr 1fr}}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
 </style>
 </head>
 <body>
 
-<div id="intro">
-  <h1 class="glitch">SAQI</h1>
-  <div class="ar">ساقي · نظام الإنذار المبكر لمصادر المياه</div>
-  <p>An AI early-warning system that tells herders, village councils and water authorities that a desert well is failing <b style="color:#fff">weeks before it runs dry</b>.</p>
-  <div class="boot" id="boot"></div>
-  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
-    <button class="btn solid" id="enterVoice">▶ Enter with voice briefing</button>
-    <button class="btn" id="enterSilent">Enter silently</button>
+<!-- ============ INTRO ============ -->
+<div class="overlay" id="intro">
+  <div class="card">
+    <div class="logo"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#fff" stroke-width="2"><path d="M12 2.5C12 2.5 5 10 5 14.5a7 7 0 0 0 14 0C19 10 12 2.5 12 2.5Z"/><path d="M9 15a3 3 0 0 0 3 3" stroke-linecap="round"/></svg></div>
+    <h1>SA<span>QI</span></h1>
+    <div class="arsub ar">ساقي · الإنذار المبكر لمصادر المياه</div>
+    <p>An AI early-warning system that tells herders, village councils and water authorities a desert well is failing <b style="color:var(--text)">weeks before it runs dry</b>.</p>
+    <div class="boot" id="boot"></div>
+    <div class="btnrow"><button class="btn" id="enterVoice">▶ START VOICE BRIEFING</button><button class="btn ghost" id="enterSilent">EXPLORE</button></div>
   </div>
 </div>
 
-<header>
-  <div class="logo"><div class="drop"></div><div><span class="orb">SAQI</span><small>DESERT WATER EARLY WARNING</small></div></div>
-  <nav><a href="#hero">Live hologram</a><a href="#how">How it works</a><a href="#rules">Desert rules</a><a href="#ladder">Alert ladder</a><a href="#who">Who we warn</a></nav>
-  <button class="btn warn" id="tourBtn">▶ Guided briefing</button>
-  <button class="btn" id="muteBtn" title="Voiceover on/off">🔊 Voice on</button>
-</header>
-
-<div id="hero">
-  <aside>
-    <div class="label">Monitored water sources</div>
-    <div id="siteList"></div>
-    <div class="stats">
-      <div class="stat"><b id="sAct" style="color:var(--red)">0</b><span>ACT NOW</span></div>
-      <div class="stat"><b id="sWarn" style="color:var(--amber)">0</b><span>WARNING</span></div>
-      <div class="stat"><b id="sOk" style="color:var(--green)">0</b><span>STABLE</span></div>
-      <div class="stat"><b id="sPeople" style="color:var(--holo)">0</b><span>PEOPLE ALERTED</span></div>
+<!-- ============ HOW IT WORKS ============ -->
+<div class="overlay modal hide" id="how">
+  <div class="card">
+    <button class="close" id="closeHow" aria-label="Close">×</button>
+    <h2>How SAQI works</h2>
+    <div class="lead">Every night, signals that are each weak on their own are fused into one forecast with an honest confidence range, then turned into a message a herder with a basic phone can act on.</div>
+    <div class="pipe">
+      <div class="pstep"><div class="n">01 · SENSE</div><h4>Pull the data</h4><p>Groundwater, vegetation, rain and climate layers from Google Earth Engine, plus well sensors and herder reports.</p><div class="chips"><span>GRACE-FO</span><span>Sentinel-2</span><span>Sentinel-1</span><span>CHIRPS</span><span>ERA5</span></div></div>
+      <div class="pstep"><div class="n">02 · CLEAN</div><h4>Handle the mess</h4><p>Cloudy pixels are filled in from radar. A sensor that goes silent for 48 hours is dropped, and the confidence range widens to match.</p></div>
+      <div class="pstep"><div class="n">03 · PREDICT</div><h4>Fuse and forecast</h4><p>A Kalman filter combines the signals into one water-level estimate, then a survival model predicts the days left, with an 80% range.</p><div class="chips"><span>Kalman</span><span>LightGBM</span><span>quantiles</span></div></div>
+      <div class="pstep"><div class="n">04 · DECIDE</div><h4>Pick the alert</h4><p>There are four alert levels. A Warning only goes out when two independent signals agree.</p></div>
+      <div class="pstep"><div class="n">05 · WARN</div><h4>Reach people</h4><p>Arabic SMS and an automated voice call to basic phones, a WhatsApp message to councils, and a dashboard for the water authority. Herders reply 1 or 2, and their replies feed back into the model.</p></div>
     </div>
-    <div class="label">Legend</div>
-    <div class="legend">
-      <div><span class="dot" style="color:var(--red)"></span>Fails in &lt; 3 weeks · ACT</div>
-      <div><span class="dot" style="color:var(--amber)"></span>Fails in 3–7 weeks · WARNING</div>
-      <div><span class="dot" style="color:var(--green)"></span>&gt; 7 weeks · STABLE</div>
-      <div><span class="dot" style="color:#9aa"></span>◌ ring = sensor offline, satellite fallback</div>
+    <div class="grid3">
+      <div class="rule"><h4>⌁ When a sensor dies</h4><p>Sweihan's sensor has been silent for 6 days. SAQI switches to satellite data and herder reports, widens the forecast range from ±9 to ±35 days, labels the forecast <b>DEGRADED</b>, and raises a repair ticket.</p></div>
+      <div class="rule"><h4>☁ When the image is cloudy</h4><p>Sentinel-1 radar sees through cloud, and the last clear 10-day composite fills any gaps. GRACE groundwater data is never blocked by cloud.</p></div>
+      <div class="rule"><h4>⚖ Trust vs. lives</h4><p>Early Watch notices go out easily because they cost little. Costly actions such as rationing or sending trucks need two signals to agree. Each well's false-alarm rate is public.</p></div>
+    </div>
+    <div class="ladder">
+      <div><h4 style="color:var(--ok)">STABLE</h4><code>P(fail ≤ 8w) &lt; 20%</code><p>Dashboard only, plus a weekly digest.</p></div>
+      <div><h4 style="color:var(--teal2)">WATCH</h4><code>P(fail ≤ 8w) ≥ 20%</code><p>The council gets a heads-up and herders are asked to report what they see.</p></div>
+      <div><h4 style="color:var(--warn)">WARNING</h4><code>P(fail ≤ 6w) ≥ 50% · 2 signals</code><p>SMS and a voice call to herders, a suggestion for another well, and a rationing plan.</p></div>
+      <div><h4 style="color:var(--act)">ACT NOW</h4><code>P(fail ≤ 3w) ≥ 70% · 2 signals</code><p>Water truck routes go out, herds are moved, and pumping is rotated between wells.</p></div>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brandmark"><div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M12 2.5C12 2.5 5 10 5 14.5a7 7 0 0 0 14 0C19 10 12 2.5 12 2.5Z"/></svg></div><div><b>SA<span>QI</span></b><small>DESERT WATER EARLY WARNING</small></div></div>
+      <p>Predicts which desert wells are failing, weeks before they run dry, and tells the people who depend on them.</p>
+      <div class="overline" style="margin-top:12px">AL DHAFRA · AL AIN / ABU DHABI, UAE</div>
+    </div>
+    <div class="side-section">
+      <div class="row"><span class="section-label">Monitoring zones</span><span class="count" id="siteCount">06 SITES</span></div>
+      <div class="subtle">CLICK A LOCATION · THE HOLOGRAM FLIES THERE AND EXPLAINS IT</div>
+    </div>
+    <div class="site-list" id="siteList"></div>
+    <div class="sidebar-bottom">
+      <div class="row"><span class="section-label">Regional overview</span><span class="count" id="horizonPill">TODAY</span></div>
+      <div class="metric-grid">
+        <div class="metric"><strong id="mAct" style="color:var(--act)">0</strong><span>ACT NOW</span></div>
+        <div class="metric"><strong id="mWarn" style="color:var(--warn)">0</strong><span>WARNING</span></div>
+        <div class="metric"><strong id="mOk" style="color:var(--ok)">0</strong><span>STABLE</span></div>
+        <div class="metric"><strong id="mPeople" style="color:var(--teal2)">0</strong><span>PEOPLE ALERTED</span></div>
+      </div>
+      <div class="voicebox">
+        <div class="row"><span class="section-label">Voice guide</span><button class="toggle on" id="voiceToggle" aria-label="Voice on/off"></button></div>
+        <select id="voiceSel" aria-label="Choose narrator voice"></select>
+        <div class="row2"><span>SPEED</span><input type="range" id="rate" min="0.8" max="1.15" step="0.05" value="0.95"><span id="rateLbl">0.95×</span></div>
+        <div class="tip" id="voiceTip">Tip: in Microsoft Edge, pick a voice marked "Natural". Those sound the most human.</div>
+      </div>
+      <div class="btnrow"><button class="btn" id="tourBtn">▶ AUTO TOUR</button><button class="btn ghost" id="howBtn">HOW IT WORKS</button></div>
     </div>
   </aside>
 
-  <div id="stage">
-    <canvas id="holo"></canvas>
-    <div class="stageTitle"><h1 class="orb glitch">AL DHAFRA · AL AIN AQUIFER GRID</h1><p class="mono">Abu Dhabi, UAE · 6 sources · satellite + sensor + herder reports</p></div>
-    <div class="stageHint">◆ CLICK A BEACON · DRAG TO ROTATE · SCROLL TO ZOOM ◆</div>
-    <div class="hud-corner tl"></div><div class="hud-corner tr"></div><div class="hud-corner bl"></div><div class="hud-corner br"></div>
-    <div class="projector"></div>
-    <div id="caption"><span class="spk">SAQI VOICE <i></i><i></i><i></i></span><span id="capText"></span></div>
+  <!-- ============ MAP / HOLOGRAM ============ -->
+  <main class="main" id="main">
+    <canvas id="holo" aria-label="Interactive 3D hologram of water sources in Al Dhafra and Al Ain. Click a beacon to hear about it."></canvas>
+    <div class="scanline"></div>
+    <div class="map-top">
+      <div><div class="overline" style="color:var(--teal2)">3D HOLOGRAM · LIVE FORECAST GRID</div><h1>AL DHAFRA <span>WATER GRID</span></h1></div>
+      <div class="liveflag"><b></b>SIMULATED FORECAST</div>
+    </div>
+    <div class="hint" id="hint">◆ CLICK A BEACON · DRAG TO ROTATE · SCROLL TO ZOOM ◆</div>
+    <div class="focus-tag" id="focusTag"><strong id="focusTitle">SITE LOCKED</strong><span id="focusSub"></span></div>
+    <div id="caption"><div class="avatar"><i></i><i></i><i></i></div><div><div class="who">SAQI GUIDE</div><div id="capText"></div></div></div>
+    <div class="map-left-meta"><div class="chip">GEOREFERENCED SITES · STYLIZED TERRAIN</div><div class="chip" id="coordChip">23°55′ N / 54°15′ E</div></div>
+    <div class="map-buttons"><button id="zoomIn" aria-label="Zoom in">+</button><button id="zoomOut" aria-label="Zoom out">−</button><button id="resetBtn" aria-label="Reset view" style="font-size:16px">⌖</button></div>
     <div id="timeline">
-      <div class="row"><span>FORECAST HORIZON</span><span>Today + <b id="wk">0</b> weeks · <b id="dateLbl"></b></span></div>
-      <input type="range" id="week" min="0" max="8" step="1" value="0">
-      <div class="row"><span>now</span><span>+2w</span><span>+4w</span><span>+6w</span><span>+8w</span></div>
+      <div class="row"><span>FORECAST HORIZON</span><span>TODAY + <b id="wk">0</b> WEEKS · <b id="dateLbl"></b></span></div>
+      <input type="range" id="week" min="0" max="8" step="1" value="0" aria-label="Forecast horizon in weeks">
+      <div class="ticks"><span>now</span><span>+2w</span><span>+4w</span><span>+6w</span><span>+8w</span></div>
     </div>
-  </div>
+    <div class="toast" id="toast"></div>
+  </main>
 
-  <aside class="right" id="detail">
-    <div class="empty"><div class="scan"></div>Select a beacon on the hologram<br>to see the prediction, the data behind it,<br>and the warning that goes out.</div>
+  <!-- ============ DETAILS ============ -->
+  <aside class="details" id="details">
+    <div class="loading-overlay"><div class="spinner"></div><div>ANALYZING WATER STRESS</div><div style="color:var(--soft);font-size:9px">FUSING SATELLITE · SENSOR · HERDER SIGNALS</div></div>
+    <div id="detailBody"></div>
+    <div class="footer"><span>SAQI v1.0</span><span>HACKATHON W-001 PROTOTYPE</span></div>
   </aside>
 </div>
-
-<section id="how">
-  <h2 class="sec orb">From satellite to SMS</h2>
-  <p class="lead">The full chain runs every night. Weak signals that are each unreliable on their own are fused into one forecast with an honest confidence range, then turned into a message a herder with a basic phone can act on.</p>
-  <div class="pipe">
-    <div class="step"><div class="n">01 · SENSE</div><h3>Pull the data</h3><p>Groundwater, vegetation, rain and climate layers from Google Earth Engine, plus well sensors and herder reports.</p><div class="chips"><span class="chip">GRACE-FO</span><span class="chip">Sentinel-2</span><span class="chip">Sentinel-1 SAR</span><span class="chip">CHIRPS</span><span class="chip">ERA5</span><span class="chip">IoT level</span></div><div class="flow"></div></div>
-    <div class="step"><div class="n">02 · CLEAN</div><h3>Handle the mess</h3><p>Cloudy pixels masked and gap-filled with radar. Dead sensors detected (flat-line or silence for 48 h) and dropped from the fusion, with the confidence range widened to match.</p><div class="flow"></div></div>
-    <div class="step"><div class="n">03 · PREDICT</div><h3>Fuse and forecast</h3><p>A Kalman filter merges the signals into one water-level state. A gradient-boosted survival model then predicts days until the well fails, with an 80% interval.</p><div class="chips"><span class="chip">Kalman fusion</span><span class="chip">LightGBM survival</span><span class="chip">quantile CI</span></div><div class="flow"></div></div>
-    <div class="step"><div class="n">04 · DECIDE</div><h3>Pick the alert level</h3><p>Four rungs from Watch to Act. A Warning only fires when two independent signals agree, which keeps false alarms down without missing real failures.</p><div class="flow"></div></div>
-    <div class="step"><div class="n">05 · WARN</div><h3>Reach people</h3><p>Arabic SMS and an automated voice call to basic phones, WhatsApp to village councils, and a dashboard for the authority. Herders reply 1 or 2 to confirm, which feeds the model.</p><div class="chips"><span class="chip">SMS 160ch</span><span class="chip">IVR voice</span><span class="chip">USSD</span><span class="chip">offline-first</span></div><div class="flow"></div></div>
-  </div>
-</section>
-
-<section id="rules">
-  <h2 class="sec orb">Built for the desert rules</h2>
-  <p class="lead">Every design choice answers one of the three constraints in the brief.</p>
-  <div class="grid3">
-    <div class="card"><div class="icon">⌁</div><h3>When a sensor dies</h3><p>Sweihan's level sensor has been silent for 6 days. SAQI does not go quiet: it switches to satellite and herder reports, widens the forecast range from ±9 to ±35 days, and shows a <b style="color:var(--amber)">DEGRADED</b> label so nobody over-trusts it. A maintenance ticket is also raised.</p></div>
-    <div class="card"><div class="icon">☁</div><h3>When the image is cloudy</h3><p>If a Sentinel-2 vegetation image is cloudy, SAQI uses Sentinel-1 radar (which sees through cloud) and the last clear 10-day composite instead. Monthly GRACE groundwater data is never blocked by cloud, so it anchors the slow trend.</p></div>
-    <div class="card"><div class="icon">⚖</div><h3>Trust vs. lives</h3><p>A missed alarm can cost a herd; a false alarm costs trust. So the cheap, early <b>Watch</b> notice fires easily, while costly actions like rationing or trucks need two independent signals to agree. Each well's false-alarm rate is shown publicly.</p></div>
-  </div>
-</section>
-
-<section id="ladder">
-  <h2 class="sec orb">The alert ladder</h2>
-  <p class="lead">Thresholds use the probability that the well fails within a time window, so the message always says how sure we are.</p>
-  <div class="ladder">
-    <div class="rung"><h4 style="color:var(--green)">STABLE</h4><div class="rule">P(fail ≤ 8w) &lt; 20%</div><p>Dashboard only. Weekly digest to the water authority.</p></div>
-    <div class="rung"><h4 style="color:var(--holo)">WATCH</h4><div class="rule">P(fail ≤ 8w) ≥ 20%</div><p>One signal is enough. The council gets a heads-up and herders are asked to report what they see.</p></div>
-    <div class="rung"><h4 style="color:var(--amber)">WARNING</h4><div class="rule">P(fail ≤ 6w) ≥ 50% · 2 signals agree</div><p>Arabic SMS and voice call to registered herders, an alternative well suggested, and a rationing plan sent to the council.</p></div>
-    <div class="rung"><h4 style="color:var(--red)">ACT</h4><div class="rule">P(fail ≤ 3w) ≥ 70% · 2 signals agree</div><p>Aid agency gets truck routing, herds are moved to the nearest stable source, and pumping is rotated.</p></div>
-  </div>
-</section>
-
-<section id="who">
-  <h2 class="sec orb">Who gets warned, and how</h2>
-  <p class="lead">One forecast is shaped into four different messages, each for a different person.</p>
-  <div class="who">
-    <div class="card"><div class="tag">HERDER · BASIC PHONE</div><h3>SMS + voice call in Arabic</h3><p>Under 160 characters, no app, no data plan. Says where to go next and when. The voice call covers anyone who cannot read.</p></div>
-    <div class="card"><div class="tag">VILLAGE COUNCIL</div><h3>WhatsApp or SMS brief</h3><p>A rationing plan and herd rotation schedule, plus which neighbouring well can share water.</p></div>
-    <div class="card"><div class="tag">WATER AUTHORITY</div><h3>Hologram dashboard</h3><p>500+ wells ranked by days left, with drill-down to every signal and a log of past alerts.</p></div>
-    <div class="card"><div class="tag">AID AGENCY</div><h3>Truck routing</h3><p>Which oases need water trucks in the next 3 weeks, and the shortest route between them.</p></div>
-  </div>
-</section>
-
-<footer>
-  <b>SAQI (ساقي, "the water-bearer")</b> · Hackathon problem W-001: Early Warnings for Desert Water Sources.<br>
-  Data note: well sensor readings, herder reports and forecasts on this page are <b>realistically simulated</b> for a real region (Al Dhafra and Al Ain, Abu Dhabi). The satellite layers named (GRACE-FO, Sentinel-1/2, CHIRPS, ERA5) are real public datasets available through Google Earth Engine. Voiceover uses your browser's built-in speech engine.
-</footer>
 
 <script>
-/* =================== DATA (simulated, realistic region) =================== */
-const LON0=52.4, LON1=56.1, LAT0=22.75, LAT1=25.0;
+/* ======================= DATA (simulated forecasts, real places) ======================= */
+const LON0=52.4,LON1=56.1,LAT0=22.75,LAT1=25.0;
 const SITES=[
- {id:'liwa',name:'Hameem Well Field',ar:'حقول آبار حميم',area:'Liwa Oasis, Al Dhafra',lon:53.95,lat:23.05,
-  days:19,lo:13,hi:26,conf:82,people:1240,sensor:'ok',
-  metric:'Water above pump intake',unit:'m',now:3.1,thr:0,
-  sig:[['GRACE-FO groundwater','−14 cm/yr','off'],['Sentinel-2 palm NDVI','0.41 ↓ 9%','stale'],['CHIRPS rain (90 d)','2 mm','off'],['ERA5 evaporation','high','stale'],['Level sensor','−0.38 m/wk','off'],['Herder reports','7 × "slow pump"','stale']],
-  issue:'Water table falling 0.38 m per week',who:'Liwa farm cooperative and 40 registered herders',
+ {id:'liwa',code:'HMM-01',name:'Hameem Well Field',ar:'حقول آبار حميم',area:'Liwa Oasis, Al Dhafra',lon:53.95,lat:23.05,
+  days:19,lo:13,hi:26,conf:82,people:1240,sensor:'ok',metric:'Water above pump intake',unit:'m',now:3.1,thr:0,
+  sig:[['GRACE-FO groundwater','−14 cm/yr','off'],['Sentinel-2 palm greenness','0.41 ↓ 9%','stale'],['CHIRPS rain, 90 days','2 mm','off'],['ERA5 evaporation','high','stale'],['Level sensor','−0.38 m/week','off'],['Herder reports','7 × "slow pump"','stale']],
+  issue:'Water table falling 0.38 m every week',cause:'The sensor, the satellite gravity data and palm greenness all point the same way. Two independent signals agree, so this is a high-confidence alert.',
+  next:'Move herds to Ghayathi from Sunday and pre-book 2 water trucks for week 2.',
+  steps:[['Rotate pumping','Spread extraction across 3 boreholes and cut irrigation by 25% immediately.'],['Move the herds','Send 40 registered herds to Ghayathi well, which has spare capacity, from Sunday.'],['Stage backup water','Pre-book 2 water trucks for week 2 in case the forecast holds.']],
   sms_ar:'تنبيه ساقي: بئر حميم قد يجف خلال ٢-٤ أسابيع. انقلوا القطيع إلى بئر غياثي من الأحد. رد ١ للتأكيد',
   sms_en:'SAQI ALERT: Hameem well may dry in 2-4 wks. Move herd to Ghayathi well from Sunday. Reply 1 to confirm',
-  action:'Rotate pumping between 3 boreholes, cut irrigation 25%, and pre-book 2 water trucks for week 2.',
-  say:"Hameem well field, in Liwa Oasis. This is our most urgent source. The level sensor shows the water table falling thirty-eight centimetres every week. Satellite gravity data from GRACE confirms the aquifer is draining, and date palm greenness has dropped nine percent. Two independent signals agree, so SAQI forecasts this well fails in about nineteen days, give or take a week, with eighty-two percent confidence. Twelve hundred people depend on it. Herders have already received an Arabic text and a voice call telling them to move their animals to Ghayathi well from Sunday."},
- {id:'quaa',name:"Al Qua'a Herd Well",ar:'بئر القوع',area:"Al Qua'a, Al Ain region",lon:55.45,lat:23.52,
-  days:44,lo:33,hi:58,conf:74,people:310,sensor:'ok',
-  metric:'Water above pump intake',unit:'m',now:2.4,thr:0,
-  sig:[['GRACE-FO groundwater','−6 cm/yr','stale'],['Sentinel-2 grazing NDVI','0.12 (bare)','off'],['CHIRPS rain (90 d)','0 mm','off'],['ERA5 temperature','+1.8 °C','stale'],['Level sensor','−0.27 m/wk','stale'],['Herder reports','11 herds this week','off']],
-  issue:'Overused: 11 herds now share one well',who:"Al Qua'a herders and the Al Ain municipality council",
+  say:"Let's start with Hameem, in Liwa Oasis. This one's urgent. The water table here is dropping almost forty centimetres, every single week. And it's not just the sensor saying that. The satellites show the aquifer draining, and the date palms are losing their green. When two independent signals agree like this, we trust it. Our forecast? About nineteen days before the pumps run dry, give or take a week. So twelve hundred people have already had a text message and a phone call, in Arabic, telling them to move their herds to Ghayathi from Sunday."},
+ {id:'quaa',code:'QUA-02',name:"Al Qua'a Herd Well",ar:'بئر القوع',area:"Al Qua'a, Al Ain region",lon:55.45,lat:23.52,
+  days:44,lo:33,hi:58,conf:74,people:310,sensor:'ok',metric:'Water above pump intake',unit:'m',now:2.4,thr:0,
+  sig:[['Herder reports','11 herds this week','off'],['Sentinel-2 grazing greenness','0.12 (bare)','off'],['CHIRPS rain, 90 days','0 mm','off'],['GRACE-FO groundwater','−6 cm/yr','stale'],['ERA5 temperature','+1.8 °C','stale'],['Level sensor','−0.27 m/week','stale']],
+  issue:'Overused: 11 herds now share one well',cause:'This isn\'t a drought problem, it\'s a crowding problem. Herd visits nearly tripled in a month as the grazing land around the well went bare.',
+  next:'Send the council a watering rota and redirect 4 herds to Remah, 38 km north.',
+  steps:[['Share the well fairly','Introduce a 2-day-per-herd watering rota, agreed with the council.'],['Redirect herds','Guide 4 herds to Remah, which recharged after the October rain.'],['Watch the trend','Re-forecast weekly. Escalate to ACT only if two signals agree.']],
   sms_ar:'تنبيه ساقي: بئر القوع مزدحم. ١١ قطيعا هذا الأسبوع. اسقوا يوم الاثنين والخميس فقط. رد ١ للتأكيد',
   sms_en:"SAQI WARNING: Al Qua'a well overused, 11 herds this week. Water your herd Mon & Thu only. Reply 1 to confirm",
-  action:'Watering rota by herd (2 days each), and redirect 4 herds to the Remah well 38 km north.',
-  say:"Al Qua'a herd well, near Al Ain. The problem here is not drought alone, it is crowding. Herders reported eleven herds using this single well this week, up from four last month, and the grazing land around it is bare in the Sentinel two images. SAQI forecasts about six weeks left. Instead of a panic alert, the council receives a watering rota, and four herds are guided north to Remah, which has spare capacity after recent rain."},
- {id:'mz',name:'Madinat Zayed Borehole',ar:'بئر مدينة زايد',area:'Madinat Zayed, Al Dhafra',lon:53.70,lat:23.68,
-  days:45,lo:34,hi:60,conf:71,people:560,sensor:'ok',
-  metric:'Salinity (EC)',unit:'mS/cm',now:9.8,thr:12,
-  sig:[['Salinity sensor','9.8 mS/cm ↑','stale'],['GRACE-FO groundwater','−9 cm/yr','stale'],['Sentinel-2 NDVI','0.33 stable','ok'],['CHIRPS rain (90 d)','4 mm','off'],['ERA5 evaporation','high','stale'],['Herder reports','"camels refuse"','stale']],
-  issue:'Turning too salty, not running dry',who:'Madinat Zayed camel owners and the water authority lab',
+  say:"This is Al Qua'a, out near Al Ain. Here, the problem isn't really drought. It's crowding. Herders told us eleven herds came to this one well this week. Last month, it was four. And the satellite pictures show the grazing land around it is basically bare. We think it has about six weeks left. So instead of a scary alarm, the council gets a simple watering rota, and four herds are guided north to Remah, which had good rain last month."},
+ {id:'mz',code:'MZD-03',name:'Madinat Zayed Borehole',ar:'بئر مدينة زايد',area:'Madinat Zayed, Al Dhafra',lon:53.70,lat:23.68,
+  days:45,lo:34,hi:60,conf:71,people:560,sensor:'ok',metric:'Salinity (EC)',unit:'mS/cm',now:9.8,thr:12,
+  sig:[['Salinity sensor','9.8 mS/cm ↑','stale'],['Herder reports','"camels refuse"','stale'],['GRACE-FO groundwater','−9 cm/yr','stale'],['Sentinel-2 greenness','0.33 stable','ok'],['CHIRPS rain, 90 days','4 mm','off'],['ERA5 evaporation','high','stale']],
+  issue:'Turning too salty, not running dry',cause:'As the water table drops, deeper brackish water is drawn into the well. Camels tolerate salinity up to about 12 mS/cm.',
+  next:'Blend with tanker water at 30% and send the lab to re-test in 2 weeks.',
+  steps:[['Test the water','Send the lab to measure salinity on site and confirm the sensor.'],['Blend, don\'t abandon','Mix in 30% desalinated tanker water to keep it safe for animals.'],['Warn only when verified','Herders get a WATCH notice now, and a WARNING only if the lab confirms.']],
   sms_ar:'تنبيه ساقي: ملوحة بئر مدينة زايد ترتفع. آمن للإبل ٦ أسابيع تقريبا. خففوه بماء الصهريج. رد ٢ لطلب فحص',
   sms_en:'SAQI WATCH: Madinat Zayed well getting saltier. Safe for camels ~6 wks. Blend with tanker water. Reply 2 for a test',
-  action:'Blend with desalinated tanker water at 30%, and send the lab to re-test salinity in 2 weeks.',
-  say:"Madinat Zayed borehole. This well will not run dry, it will turn too salty. As the water table drops, deeper brackish water is drawn in, and salinity has risen from seven to nearly ten millisiemens. Camels tolerate up to about twelve. SAQI predicts that limit is reached in roughly six weeks. Herders already noticed camels refusing to drink, and those reports raised the model's confidence."},
- {id:'sw',name:'Sweihan Village Well',ar:'بئر سويحان',area:'Sweihan, Al Ain region',lon:55.33,lat:24.47,
-  days:68,lo:33,hi:103,conf:54,people:880,sensor:'off',
-  metric:'Water above pump intake (est.)',unit:'m',now:4.6,thr:0,
-  sig:[['Level sensor','OFFLINE 6 d','off'],['GRACE-FO groundwater','−4 cm/yr','stale'],['Sentinel-2 NDVI','cloud → SAR used','stale'],['Sentinel-1 SAR moisture','normal','ok'],['CHIRPS rain (90 d)','11 mm','ok'],['Herder reports','2 × "normal"','ok']],
-  issue:'Sensor offline: running on satellite fallback',who:'Sweihan village council and the maintenance crew',
-  sms_ar:'إشعار ساقي: حساس بئر سويحان متوقف. التوقع أقل دقة. أبلغونا عن حالة البئر برد ١ طبيعي أو ٢ بطيء',
+  say:"Madinat Zayed is a different kind of problem. This well won't run dry. It's turning salty. As the water table drops, deeper, saltier water gets pulled in. Camels can handle salinity up to about twelve, and it's already close to ten. We expect it to cross that line in roughly six weeks. Funny thing is, the herders noticed first. They told us the camels were refusing to drink. And those reports actually made our model more confident."},
+ {id:'sw',code:'SWH-04',name:'Sweihan Village Well',ar:'بئر سويحان',area:'Sweihan, Al Ain region',lon:55.33,lat:24.47,
+  days:68,lo:33,hi:103,conf:54,people:880,sensor:'off',metric:'Water above pump intake (estimated)',unit:'m',now:4.6,thr:0,
+  sig:[['Level sensor','OFFLINE 6 days','off'],['Sentinel-1 radar moisture','normal','ok'],['Sentinel-2 greenness','cloudy → radar used','stale'],['GRACE-FO groundwater','−4 cm/yr','stale'],['CHIRPS rain, 90 days','11 mm','ok'],['Herder reports','2 × "normal"','ok']],
+  issue:'Sensor offline: running on satellite fallback',cause:'The sensor stopped reporting 6 days ago. SAQI keeps forecasting from radar, GRACE and herder texts, but widens the range and labels it DEGRADED.',
+  next:'Repair crew dispatched, and 20 herders asked to text in the well\'s condition.',
+  steps:[['Fix the sensor','A maintenance ticket was raised automatically. The battery is the likely cause.'],['Crowdsource readings','Ask 20 herders to reply 1 (normal) or 2 (slow pump).'],['Don\'t cry wolf','No public alarm is sent while confidence is below 60%.']],
+  sms_ar:'إشعار ساقي: حساس بئر سويحان متوقف. التوقع أقل دقة. أبلغونا عن حالة البئر: رد ١ طبيعي أو ٢ بطيء',
   sms_en:'SAQI NOTICE: Sweihan sensor offline, forecast less certain. Tell us: reply 1 = normal, 2 = slow pump',
-  action:'Send a maintenance ticket for the sensor, and ask 20 herders to report the well state by SMS.',
-  say:"Sweihan village well. Its sensor has been silent for six days, probably a dead battery. This is the desert rule in action. SAQI does not go blind and does not cry wolf. It falls back on satellite gravity data and radar, which sees through cloud, and asks herders to text in what they see. The forecast is still about ten weeks, but the range widens to plus or minus five weeks, and the confidence drops to fifty-four percent. The dashboard flags it as degraded, and a repair crew has been called."},
- {id:'gh',name:'Ghayathi Reserve Well',ar:'بئر غياثي',area:'Ghayathi, Al Dhafra',lon:52.80,lat:23.84,
-  days:150,lo:128,hi:180,conf:86,people:420,sensor:'ok',
-  metric:'Water above pump intake',unit:'m',now:7.9,thr:0,
-  sig:[['GRACE-FO groundwater','−1 cm/yr','ok'],['Sentinel-2 NDVI','0.29 stable','ok'],['CHIRPS rain (90 d)','14 mm','ok'],['ERA5 evaporation','moderate','ok'],['Level sensor','−0.05 m/wk','ok'],['Herder reports','3 × "good"','ok']],
-  issue:'Stable, with spare capacity to share',who:'Receives herds redirected from Hameem',
+  say:"Now, Sweihan. Its sensor went silent six days ago. Probably a flat battery. In the real desert, this happens all the time. So what does SAQI do? It doesn't go blind, and it doesn't panic either. It leans on satellite radar, which can see through cloud, and it asks local herders to text in what they're seeing. The forecast is still around ten weeks, but we widen the range, and we clearly mark it as lower confidence. And a repair crew is already on the way."},
+ {id:'gh',code:'GHY-05',name:'Ghayathi Reserve Well',ar:'بئر غياثي',area:'Ghayathi, Al Dhafra',lon:52.80,lat:23.84,
+  days:150,lo:128,hi:180,conf:86,people:420,sensor:'ok',metric:'Water above pump intake',unit:'m',now:7.9,thr:0,
+  sig:[['Level sensor','−0.05 m/week','ok'],['GRACE-FO groundwater','−1 cm/yr','ok'],['Sentinel-2 greenness','0.29 stable','ok'],['CHIRPS rain, 90 days','14 mm','ok'],['ERA5 evaporation','moderate','ok'],['Herder reports','3 × "good"','ok']],
+  issue:'Stable, with spare capacity to share',cause:'Around five months of margin. Ghayathi becomes the destination for herds leaving Hameem.',
+  next:'Host up to 6 extra herds. Re-check every week that sharing stays safe.',
+  steps:[['Receive herds','Open 4-hour daily slots for each of the herds moving from Hameem.'],['Guard the margin','SAQI re-forecasts every week with the extra demand included.'],['Stay ready','If Ghayathi drops to WATCH, sharing pauses automatically.']],
   sms_ar:'ساقي: بئر غياثي مستقر ويستقبل قطعان حميم من الأحد. الحصة ٤ ساعات يوميا لكل قطيع',
   sms_en:'SAQI: Ghayathi well stable, receiving Hameem herds from Sunday. 4 hrs/day per herd',
-  action:'Host up to 6 extra herds. SAQI checks every week that sharing does not push this well into Watch.',
-  say:"Ghayathi reserve well. A healthy source with about five months of margin and eighty-six percent confidence. SAQI doesn't just warn, it finds alternatives. Ghayathi has spare capacity, so it becomes the destination for herds leaving Hameem. The model also checks every week that the extra herds don't push Ghayathi itself into danger."},
- {id:'rm',name:'Remah Recharge Well',ar:'بئر الرماح',area:'Remah, Al Ain region',lon:55.05,lat:24.12,
-  days:120,lo:96,hi:150,conf:79,people:350,sensor:'ok',
-  metric:'Water above pump intake',unit:'m',now:6.2,thr:0,
-  sig:[['CHIRPS rain (90 d)','38 mm ↑','ok'],['GRACE-FO groundwater','+3 cm anomaly','ok'],['Sentinel-2 NDVI','0.36 ↑ 22%','ok'],['ERA5 soil moisture','above normal','ok'],['Level sensor','+0.12 m/wk','ok'],['Herder reports','"wadi flowed"','ok']],
-  issue:'Recharging after the October storm',who:"Takes 4 herds from Al Qua'a",
-  sms_ar:"ساقي: بئر الرماح ارتفع بعد الأمطار. متاح لـ ٤ قطعان من القوع. اتصلوا بمجلس الحي للحجز",
+  say:"Ghayathi is one of our healthy wells, with about five months of water to spare. And that matters, because SAQI doesn't just raise alarms. It finds solutions. Ghayathi has spare capacity, so it's where the Hameem herds are being sent. And every week, we check that the extra animals aren't pushing Ghayathi itself into trouble."},
+ {id:'rm',code:'RMH-06',name:'Remah Recharge Well',ar:'بئر الرماح',area:'Remah, Al Ain region',lon:55.05,lat:24.12,
+  days:120,lo:96,hi:150,conf:79,people:350,sensor:'ok',metric:'Water above pump intake',unit:'m',now:6.2,thr:0,
+  sig:[['CHIRPS rain, 90 days','38 mm ↑','ok'],['Level sensor','+0.12 m/week','ok'],['GRACE-FO groundwater','+3 cm anomaly','ok'],['Sentinel-2 greenness','0.36 ↑ 22%','ok'],['ERA5 soil moisture','above normal','ok'],['Herder reports','"wadi flowed"','ok']],
+  issue:'Recharging after the October storm',cause:'38 mm of rain made the wadi flow. The water table is rising, and the satellites show the land greening.',
+  next:"Take 4 herds from Al Qua'a and refill the community storage tank.",
+  steps:[["Share the surplus","Accept 4 herds redirected from Al Qua'a."],['Bank the water','Refill the community storage tank while levels are high.'],['Learn from it','Use this recharge event to improve the model\'s rainfall response.']],
+  sms_ar:"ساقي: بئر الرماح ارتفع بعد الأمطار. متاح لـ ٤ قطعان من القوع. تواصلوا مع مجلس الحي للحجز",
   sms_en:"SAQI: Remah well recharged after rain. Open to 4 herds from Al Qua'a. Contact the council to book",
-  action:'Accept 4 redirected herds, and use the recharge window to refill the community storage tank.',
-  say:"Remah recharge well. A good news story. The October storm dropped thirty-eight millimetres of rain, the wadi flowed, and the water table is rising twelve centimetres a week. Satellite greenness is up twenty-two percent. SAQI uses this recharge window to take pressure off Al Qua'a, so one community's surplus becomes another community's safety net."}
+  say:"And finally, some good news. Remah got a big storm in October. Thirty-eight millimetres of rain. The wadi actually flowed, and the water level here is rising. The satellites show the land greening up, by more than twenty percent. So we use this moment. Remah takes four herds from Al Qua'a, and one community's good luck becomes another community's safety net."}
 ];
-const INTRO="Welcome to SAQI, the water-bearer. Today, desert communities find out a well is failing when it is already dry. SAQI warns them weeks earlier. This hologram shows six real water sources across Al Dhafra and Al Ain in Abu Dhabi. Every night we fuse satellite groundwater, vegetation and rainfall data with well sensors and herder reports, predict how many days each source has left with an honest confidence range, and send an Arabic text and voice call to the people who need to act. Click any beacon to hear its story.";
+const INTRO="Hi, and welcome to SAQI. It means the water-bearer. Right now, most desert communities only find out a well is failing when it's already dry. And by then, it's too late. SAQI warns them weeks earlier. On this map, you're looking at six real water sources, across Al Dhafra and Al Ain, in Abu Dhabi. Every night, we combine satellite data, well sensors, and reports from herders. We predict how long each source has left, and we're honest about how sure we are. Then we send a simple Arabic text, and a phone call, to the people who need to act. Go ahead, pick any location, and I'll walk you through it.";
+const OUTRO="So, that's SAQI. Satellite and sensor data, an honest prediction, and a warning that reaches a herder's basic phone, weeks before the crisis. Because the first warning shouldn't be an empty bucket.";
 
-/* =================== helpers =================== */
+/* ======================= helpers ======================= */
 const $=s=>document.querySelector(s);
-const statusOf=d=>d<21?'act':d<49?'warn':'ok';
-const COL={act:'#ff3d5a',warn:'#ffb547',ok:'#2dffa4'};
+const COL={act:'#e5394f',warn:'#e59400',ok:'#12a26a'};
 const LBL={act:'ACT NOW',warn:'WARNING',ok:'STABLE'};
-let week=0, selected=null, voiceOn=true, touring=false;
+const statusOf=d=>d<21?'act':d<49?'warn':'ok';
+let week=0,selected=null,touring=false,voiceOn=true;
 const daysAt=s=>s.days-week*7;
+const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+const store={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('show'),3200)}
+function fmtDeg(v,h){const d=Math.floor(v),m=Math.round((v-d)*60);return `${d}°${String(m).padStart(2,'0')}′ ${h}`}
 
-/* =================== audio sfx =================== */
+/* ======================= sound fx ======================= */
 let actx;
-function blip(f=880,d=.12,type='sine',v=.06){
-  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();
-    const o=actx.createOscillator(),g=actx.createGain();o.type=type;o.frequency.value=f;
-    o.frequency.exponentialRampToValueAtTime(f*1.8,actx.currentTime+d);
-    g.gain.setValueAtTime(v,actx.currentTime);g.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+d);
-    o.connect(g).connect(actx.destination);o.start();o.stop(actx.currentTime+d);}catch(e){}
-}
+function blip(f=880,d=.12,type='sine',v=.04){try{actx=actx||new(window.AudioContext||window.webkitAudioContext)();const o=actx.createOscillator(),g=actx.createGain();o.type=type;o.frequency.value=f;o.frequency.exponentialRampToValueAtTime(f*1.6,actx.currentTime+d);g.gain.setValueAtTime(v,actx.currentTime);g.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+d);o.connect(g).connect(actx.destination);o.start();o.stop(actx.currentTime+d)}catch(e){}}
 
-/* =================== voice =================== */
-let voice=null, speakToken=0;
-function pickVoice(){const vs=speechSynthesis.getVoices();
-  voice=vs.find(v=>/en-GB/.test(v.lang)&&/Google|Natural|Neural/i.test(v.name))||vs.find(v=>/en-(GB|US)/.test(v.lang)&&/Google|Natural|Neural|Samantha|Daniel/i.test(v.name))||vs.find(v=>/^en/.test(v.lang))||null;}
-if('speechSynthesis' in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice;}
-function stopVoice(){speakToken++;try{speechSynthesis.cancel()}catch(e){};$('#caption').classList.remove('on');}
+/* ======================= natural voice ======================= */
+let voices=[],voice=null,rate=+store.get('saqi-rate',.95),speakTok=0;
+function scoreVoice(v){const n=v.name;let s=0;
+  if(/Natural|Neural|Online/i.test(n))s+=100;         // Edge / Windows neural voices: most human
+  if(/Premium|Enhanced|Siri/i.test(n))s+=80;           // Apple high quality
+  if(/Google UK English Female|Google US English/i.test(n))s+=60;
+  if(/Samantha|Daniel|Karen|Serena|Moira|Tessa|Ava|Allison|Susan/i.test(n))s+=40;
+  if(/en-GB/i.test(v.lang))s+=6;if(/en-US/i.test(v.lang))s+=5;
+  if(/Jenny|Aria|Sonia|Libby|Ryan|Guy|Emma|Andrew|Brian|Ava/i.test(n))s+=15;
+  if(/espeak|robot|Zira|David|Mark|Hazel/i.test(n))s-=20;
+  return s}
+function loadVoices(){
+  if(!('speechSynthesis' in window)){$('#voiceTip').textContent='This browser has no speech engine. Captions will still play.';return}
+  voices=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang)).sort((a,b)=>scoreVoice(b)-scoreVoice(a));
+  if(!voices.length)return;
+  const saved=store.get('saqi-voice','');
+  voice=voices.find(v=>v.name===saved)||voices[0];
+  const sel=$('#voiceSel');sel.innerHTML='';
+  voices.forEach(v=>{const o=document.createElement('option');o.value=v.name;const star=scoreVoice(v)>=60?'★ ':'';o.textContent=`${star}${v.name.replace(/Microsoft |Google /,'')} (${v.lang})`;if(v===voice)o.selected=true;sel.appendChild(o)});
+  if(scoreVoice(voice)>=100)$('#voiceTip').textContent='Using a natural neural voice ✓';
+}
+if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}
+$('#voiceSel').onchange=e=>{voice=voices.find(v=>v.name===e.target.value);store.set('saqi-voice',voice.name);speak("Hi, this is how I'll sound.")};
+$('#rate').value=rate;$('#rateLbl').textContent=rate.toFixed(2)+'×';
+$('#rate').oninput=e=>{rate=+e.target.value;$('#rateLbl').textContent=rate.toFixed(2)+'×';store.set('saqi-rate',rate)};
+$('#voiceToggle').onclick=e=>{voiceOn=!voiceOn;e.currentTarget.classList.toggle('on',voiceOn);if(!voiceOn)try{speechSynthesis.cancel()}catch(e){}};
+
+function stopVoice(){speakTok++;try{speechSynthesis.cancel()}catch(e){}$('#caption').classList.remove('on')}
 function speak(text,onDone){
-  stopVoice();const tok=speakToken;
-  const parts=text.match(/[^.!?]+[.!?]+/g)||[text];
-  const cap=$('#caption'),ct=$('#capText');
-  if(!voiceOn||!('speechSynthesis' in window)){ // captions only, timed
-    let i=0;cap.classList.add('on');
-    const next=()=>{if(tok!==speakToken)return;if(i>=parts.length){cap.classList.remove('on');onDone&&onDone();return;}
-      ct.textContent=parts[i].trim();const ms=Math.max(1800,parts[i].length*55);i++;setTimeout(next,ms);};
-    next();return;}
-  let i=0;cap.classList.add('on');
+  stopVoice();const tok=speakTok;
+  // split on sentences, then gently on long clauses so pauses feel natural
+  const parts=(text.match(/[^.!?]+[.!?]+["']?/g)||[text]).map(s=>s.trim()).filter(Boolean);
+  const cap=$('#caption'),ct=$('#capText');cap.classList.add('on');let i=0;
+  const useVoice=voiceOn&&'speechSynthesis' in window;
   const next=()=>{
-    if(tok!==speakToken)return;
-    if(i>=parts.length){cap.classList.remove('on');onDone&&onDone();return;}
-    const s=parts[i++].trim();ct.textContent=s;
-    const u=new SpeechSynthesisUtterance(s);if(voice)u.voice=voice;u.rate=1.02;u.pitch=1;
-    let done=false;const fin=()=>{if(done)return;done=true;next();};
-    u.onend=fin;u.onerror=fin;
-    setTimeout(()=>{if(!done&&!speechSynthesis.speaking)fin();},s.length*120+4000); // safety
+    if(tok!==speakTok)return;
+    if(i>=parts.length){setTimeout(()=>{if(tok===speakTok){cap.classList.remove('on');onDone&&onDone()}},500);return}
+    const s=parts[i++];ct.textContent=s;
+    if(!useVoice){setTimeout(next,Math.max(1600,s.length*60));return}
+    const u=new SpeechSynthesisUtterance(s);if(voice)u.voice=voice;u.lang=voice?voice.lang:'en-GB';
+    u.rate=rate*(s.endsWith('?')?1.02:1)*(s.length<25?.94:1);   // slow down short punchy lines
+    u.pitch=s.endsWith('?')?1.06:1;u.volume=1;
+    let done=false;const fin=()=>{if(done)return;done=true;setTimeout(next,s.length<25?380:240)};  // breathing gap
+    u.onend=fin;u.onerror=fin;setTimeout(()=>{if(!done&&!speechSynthesis.speaking)fin()},s.length*110+5000);
     speechSynthesis.speak(u);
-  };
-  next();
+  };next();
 }
 
-/* =================== site list & stats =================== */
+/* ======================= sidebar ======================= */
 function renderList(){
-  const L=$('#siteList');L.innerHTML='';
-  let c={act:0,warn:0,ok:0},ppl=0;
-  [...SITES].sort((a,b)=>daysAt(a)-daysAt(b)).forEach(s=>{
-    const d=daysAt(s),st=statusOf(d);c[st]++;if(st!=='ok')ppl+=s.people;
-    const el=document.createElement('div');el.className='site'+(selected===s?' active':'');
-    el.innerHTML=`<span class="dot" style="color:${s.sensor==='off'?'#9aa':COL[st]}"></span><div><div class="nm">${s.name}</div><div class="sub">${s.area.split(',')[0]}</div></div><div class="days" style="color:${COL[st]}">${d>0?d+'d':'DRY'}<small>${LBL[st]}</small></div>`;
-    el.onclick=()=>select(s,true);L.appendChild(el);
-  });
-  animateNum('#sAct',c.act);animateNum('#sWarn',c.warn);animateNum('#sOk',c.ok);animateNum('#sPeople',ppl);
+  const L=$('#siteList');L.innerHTML='';let c={act:0,warn:0,ok:0},ppl=0;
+  SITES.forEach((s,i)=>{const d=daysAt(s),st=statusOf(d);c[st]++;if(st!=='ok')ppl+=s.people;
+    const b=document.createElement('button');b.className='site'+(selected===s?' active':'');b.setAttribute('aria-label','Fly to '+s.name);
+    b.innerHTML=`<span class="dot ${s.sensor==='off'?'off':''}" style="--dot:${COL[st]}"></span><span><strong>${s.name}</strong><small>${s.code} · ${s.area.split(',')[0]}</small></span><span class="days" style="color:${COL[st]}">${d>0?d+'d':'DRY'}<small>${LBL[st]}</small></span>`;
+    b.onclick=()=>{if(touring)stopTour();select(s,true)};L.appendChild(b)});
+  num('#mAct',c.act);num('#mWarn',c.warn);num('#mOk',c.ok);num('#mPeople',ppl);
 }
-function animateNum(sel,to){const el=$(sel),from=+el.textContent||0,t0=performance.now();
-  const f=t=>{const k=Math.min(1,(t-t0)/600);el.textContent=Math.round(from+(to-from)*k).toLocaleString();if(k<1)requestAnimationFrame(f)};requestAnimationFrame(f);}
+function num(sel,to){const el=$(sel),from=+el.textContent.replace(/,/g,'')||0,t0=performance.now();const f=t=>{const k=Math.min(1,(t-t0)/600);el.textContent=Math.round(from+(to-from)*ease(k)).toLocaleString();if(k<1)requestAnimationFrame(f)};requestAnimationFrame(f)}
 
-/* =================== detail panel =================== */
+/* ======================= details ======================= */
+function emptyDetail(){
+  $('#detailBody').innerHTML=`<div class="top-control"><div class="eyebrow">◈ SITE INTELLIGENCE</div><h2>Choose a water source</h2><div class="sub">Click a beacon on the hologram or a zone on the left.</div></div>
+  <div class="detail-scroll"><div class="block"><div class="btitle">What you'll see</div><ol class="steps">
+  <li><span class="n">01</span><div><strong>Days until failure</strong>An 80% range and the model's confidence, with no false precision.</div></li>
+  <li><span class="n">02</span><div><strong>The signals behind it</strong>Satellite, sensor and herder data, each marked as healthy, stale or offline.</div></li>
+  <li><span class="n">03</span><div><strong>The warning that goes out</strong>An Arabic SMS to a basic phone, plus a 3-step action plan.</div></li></ol></div></div>`;
+}
 function renderDetail(s){
-  const d=daysAt(s),st=statusOf(d),D=$('#detail');
+  const d=daysAt(s),st=statusOf(d),c=COL[st],i=SITES.indexOf(s);
   const lo=Math.max(0,s.lo-week*7),hi=Math.max(0,s.hi-week*7);
-  D.innerHTML=`<div class="fade-in">
-   <div class="label">Source ${SITES.indexOf(s)+1} / ${SITES.length} · ${s.lat.toFixed(2)}°N ${s.lon.toFixed(2)}°E</div>
-   <div class="dHead"><h2>${s.name}</h2><div class="ar">${s.ar}</div><div class="small">${s.area}</div>
-   <span class="badge" style="color:${COL[st]}">${LBL[st]}</span> ${s.sensor==='off'?'<span class="badge" style="color:var(--amber)">DEGRADED · SATELLITE FALLBACK</span>':''}</div>
-   <div class="big"><b style="color:${COL[st]}">${d>0?d:0}</b><span>days until ${s.unit==='mS/cm'?'unsafe salinity':'dry'}<br>80% range ${lo}–${hi} d</span></div>
-   <div class="small">Model confidence ${s.conf}%</div><div class="conf"><i style="width:0"></i></div>
-   <canvas id="chart"></canvas>
-   <div class="small" style="margin-bottom:6px">${s.metric} (${s.unit}) · 20 weeks observed → 8 weeks forecast</div>
-   <div class="label" style="margin-top:14px">Signals fused</div>
-   ${s.sig.map(g=>`<div class="sig"><span>${g[0]}</span><span class="v ${g[2]}">${g[1]}</span></div>`).join('')}
-   <div class="action" style="border-color:var(--holo);background:rgba(0,240,255,.06)"><b style="color:var(--holo)">WHY</b>${s.issue}. Warning goes to: ${s.who}.</div>
-   <div class="label" style="margin-top:16px">Warning sent to basic phones</div>
-   <div class="phone"><div class="screen"><div class="from"><span>SAQI 4040</span><span>14:05</span></div><div class="ar" id="smsAr"></div><div id="smsEn" style="font-size:10px;opacity:.8"></div></div><div class="keys">${'<i></i>'.repeat(9)}</div></div>
-   <div class="small" style="text-align:center">+ automated Arabic voice call for anyone who can't read</div>
-   <div class="action"><b>RECOMMENDED ACTION</b>${s.action}</div>
-   <div class="rowBtns"><button class="btn" id="replay">🔊 Replay voiceover</button><button class="btn" id="nextS">Next source →</button></div>
-  </div>`;
-  requestAnimationFrame(()=>{const i=D.querySelector('.conf i');if(i)i.style.width=s.conf+'%'});
-  typeText($('#smsAr'),s.sms_ar,18);setTimeout(()=>typeText($('#smsEn'),s.sms_en,10),400);
+  $('#detailBody').innerHTML=`<div class="fade">
+  <div class="top-control"><div class="row"><span class="eyebrow">◈ SITE INTELLIGENCE</span><span class="overline">ZONE ${String(i+1).padStart(2,'0')} / 06</span></div>
+   <h2>${s.name}</h2><div class="arn ar">${s.ar}</div><div class="sub">${s.lat.toFixed(4)}° N, ${s.lon.toFixed(4)}° E · ${s.code}</div>
+   <div class="tags"><span class="tag" style="--c:${c}">${LBL[st]}</span>${s.sensor==='off'?'<span class="tag" style="--c:#8a98a2">SENSOR OFFLINE · DEGRADED</span>':''}</div></div>
+  <div class="detail-scroll">
+   <section class="block"><div class="btitle">Time until ${s.unit==='mS/cm'?'unsafe salinity':'dry'} <strong>8-WEEK FORECAST</strong></div>
+    <div class="bigval"><strong style="color:${c}">${Math.max(0,d)}<small>days</small></strong><span class="range">80% RANGE<br>${lo}–${hi} DAYS</span></div>
+    <div class="confbar"><i id="confI"></i></div><div class="legend"><span>MODEL CONFIDENCE</span><span>${s.conf}%</span></div>
+    <canvas id="chart"></canvas><div class="legend"><span>−20 WEEKS</span><span>${s.metric.toUpperCase()} (${s.unit})</span><span>+8W</span></div></section>
+   <section class="block"><div class="btitle">Detected risk <strong>RISK / ${String(i+1).padStart(2,'0')}</strong></div>
+    <div class="issue" style="--c:${c}"><h3>${s.issue}</h3><p>${s.cause}</p></div>
+    <div class="next"><b>⏱ NEXT ACTION</b><span>${s.next}</span></div></section>
+   <section class="block"><div class="btitle">Signals fused <strong>${s.sig.length} SOURCES</strong></div>
+    ${s.sig.map(g=>`<div class="sig"><span class="k">${g[0]}</span><span class="v ${g[2]}">${g[1]}</span></div>`).join('')}</section>
+   <section class="block"><div class="btitle">Recommended plan <strong>3 STEPS</strong></div><ol class="steps">
+    ${s.steps.map((a,k)=>`<li><span class="n">0${k+1}</span><div><strong>${a[0]}</strong>${a[1]}</div></li>`).join('')}</ol></section>
+   <section class="block"><div class="btitle">Early-warning preview <strong>SMS · VOICE CALL</strong></div>
+    <div class="sms"><div class="hdr"><span>▣ SAQI 4040 · BASIC PHONE</span><span>14:05</span></div>
+     <div class="bubble ar" id="smsAr"></div><div class="bubble en" id="smsEn"></div></div>
+    <div class="btnrow"><button class="btn sendbtn" id="sendBtn">PREVIEW WARNING DELIVERY →</button></div>
+    <div class="btnrow"><button class="btn ghost" id="replay">🔊 REPLAY GUIDE</button><button class="btn ghost" id="nextS">NEXT ZONE →</button></div>
+    <p class="fine">Demo only. No real message is sent and no live wells are monitored. Forecasts are simulated for real places.</p></section>
+  </div></div>`;
+  requestAnimationFrame(()=>$('#confI').style.width=s.conf+'%');
+  typeText($('#smsAr'),s.sms_ar,16);setTimeout(()=>typeText($('#smsEn'),s.sms_en,8),350);
   drawChart(s);
+  $('#sendBtn').onclick=()=>{blip(1200,.1);toast(`✓ ${s.people.toLocaleString()} people would get this SMS and an Arabic voice call. Nothing was actually sent.`)};
   $('#replay').onclick=()=>speak(s.say);
-  $('#nextS').onclick=()=>{const n=SITES[(SITES.indexOf(s)+1)%SITES.length];select(n,true)};
+  $('#nextS').onclick=()=>select(SITES[(i+1)%SITES.length],true);
 }
-function typeText(el,txt,ms){let i=0;el.textContent='';const t=setInterval(()=>{el.textContent=txt.slice(0,++i);if(i>=txt.length)clearInterval(t)},ms);}
-
-/* chart */
-function rand(seed){return()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646}}
+function typeText(el,t,ms){let k=0;el.textContent='';const iv=setInterval(()=>{el.textContent=t.slice(0,++k);if(k>=t.length)clearInterval(iv)},ms)}
+function rnd(seed){return()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646}}
 function drawChart(s){
-  const c=$('#chart');if(!c)return;const dpr=devicePixelRatio||1,W=c.clientWidth,H=c.clientHeight;
-  c.width=W*dpr;c.height=H*dpr;const g=c.getContext('2d');g.scale(dpr,dpr);
-  const rate=(s.thr-s.now)/(s.days/7); // per week
-  const r=rand(s.id.length*977+s.days);
-  const hist=[];for(let t=-20;t<=0;t++){const drift=s.id==='rm'?rate*t*(t>-6?1:-.4):rate*t*(1+0.15*Math.sin(t/3));hist.push([t,s.now+drift+(t<0?(r()-.5)*Math.abs(s.now-s.thr)*.06:0)])}
-  const fc=[];for(let t=0;t<=8;t++){const m=s.now+rate*t,w=Math.abs(s.thr-s.now)*(1-s.conf/100)*(t/8)*1.4+Math.abs(s.thr-s.now)*.02*t;fc.push([t,m,m-w,m+w])}
-  const all=[...hist.map(h=>h[1]),...fc.flatMap(f=>[f[2],f[3]]),s.thr];
-  let mn=Math.min(...all),mx=Math.max(...all);const pad=(mx-mn)*.12;mn-=pad;mx+=pad;
-  const X=t=>30+(t+20)/28*(W-40),Y=v=>H-18-(v-mn)/(mx-mn)*(H-30);
-  const drawStatic=()=>{g.clearRect(0,0,W,H);
-  g.strokeStyle='rgba(0,240,255,.1)';g.lineWidth=1;for(let i=0;i<5;i++){const y=12+i*(H-30)/4;g.beginPath();g.moveTo(30,y);g.lineTo(W-10,y);g.stroke();}
-  g.fillStyle='#7aa5b5';g.font='9px "JetBrains Mono", monospace';g.fillText(mx.toFixed(1),2,14);g.fillText(mn.toFixed(1),2,H-18);
-  g.fillText('-20w',X(-20)-8,H-4);g.fillText('now',X(0)-8,H-4);g.fillText('+8w',X(8)-14,H-4);
-  // threshold
-  g.strokeStyle='#ff3d5a';g.setLineDash([4,4]);g.beginPath();g.moveTo(30,Y(s.thr));g.lineTo(W-10,Y(s.thr));g.stroke();g.setLineDash([]);
-  g.fillStyle='#ff3d5a';g.fillText(s.unit==='mS/cm'?'camel limit':'pump intake',W-80,Y(s.thr)-4);
-  // now line
-  g.strokeStyle='rgba(255,255,255,.3)';g.beginPath();g.moveTo(X(0),10);g.lineTo(X(0),H-18);g.stroke();
-  };
-  let p=0;const t0=performance.now();
-  (function anim(t){p=Math.min(1,(t-t0)/1100);drawStatic();
-    g.save();g.beginPath();g.rect(0,0,30+(W-40)*p,H);g.clip();
-    g.fillStyle='rgba(0,240,255,.16)';g.beginPath();fc.forEach((f,i)=>i?g.lineTo(X(f[0]),Y(f[3])):g.moveTo(X(f[0]),Y(f[3])));[...fc].reverse().forEach(f=>g.lineTo(X(f[0]),Y(f[2])));g.fill();
-    g.strokeStyle='#00f0ff';g.lineWidth=2;g.shadowColor='#00f0ff';g.shadowBlur=8;g.beginPath();hist.forEach((h,i)=>i?g.lineTo(X(h[0]),Y(h[1])):g.moveTo(X(h[0]),Y(h[1])));g.stroke();
-    g.setLineDash([5,4]);g.strokeStyle='#ffb547';g.shadowColor='#ffb547';g.beginPath();fc.forEach((f,i)=>i?g.lineTo(X(f[0]),Y(f[1])):g.moveTo(X(f[0]),Y(f[1])));g.stroke();g.setLineDash([]);g.restore();
-    if(p<1)requestAnimationFrame(anim);})(t0);
+  const cv=$('#chart');if(!cv)return;const dpr=devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;cv.width=W*dpr;cv.height=H*dpr;const g=cv.getContext('2d');g.scale(dpr,dpr);
+  const d=daysAt(s),c=COL[statusOf(d)],rate=(s.thr-s.now)/(s.days/7),r=rnd(s.id.length*977+s.days),span=Math.abs(s.now-s.thr);
+  const hist=[];for(let t=-20;t<=0;t++){const drift=s.id==='rm'?rate*t*(t>-6?1:-.5):rate*t*(1+.15*Math.sin(t/3));hist.push([t,s.now+drift+(t<0?(r()-.5)*span*.06:0)])}
+  const fc=[];for(let t=0;t<=8;t++){const m=s.now+rate*t,w=span*(1-s.conf/100)*(t/8)*1.3+span*.02*t;fc.push([t,m,m-w,m+w])}
+  const all=[...hist.map(h=>h[1]),...fc.flatMap(f=>[f[2],f[3]]),s.thr];let mn=Math.min(...all),mx=Math.max(...all);const pad=(mx-mn)*.1;mn-=pad;mx+=pad;
+  const X=t=>4+(t+20)/28*(W-8),Y=v=>H-6-(v-mn)/(mx-mn)*(H-14),nowX=X(week);
+  const t0=performance.now();
+  (function anim(t){const p=Math.min(1,(t-t0)/1000);g.clearRect(0,0,W,H);
+    g.strokeStyle='#e8eef1';g.lineWidth=1;for(let k=0;k<4;k++){const y=6+k*(H-14)/3;g.beginPath();g.moveTo(0,y);g.lineTo(W,y);g.stroke()}
+    g.strokeStyle=COL.act;g.setLineDash([4,4]);g.beginPath();g.moveTo(0,Y(s.thr));g.lineTo(W,Y(s.thr));g.stroke();g.setLineDash([]);
+    g.fillStyle=COL.act;g.font='600 9px "IBM Plex Mono",monospace';g.fillText(s.unit==='mS/cm'?'CAMEL LIMIT':'PUMP INTAKE',W-78,Y(s.thr)-5);
+    g.fillStyle='rgba(13,31,42,.06)';g.fillRect(X(0),0,W-X(0),H);
+    g.save();g.beginPath();g.rect(0,0,4+(W-8)*ease(p),H);g.clip();
+    const gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'rgba(10,154,168,.22)');gr.addColorStop(1,'rgba(10,154,168,0)');
+    g.fillStyle=gr;g.beginPath();g.moveTo(X(-20),H);hist.forEach(h=>g.lineTo(X(h[0]),Y(h[1])));g.lineTo(X(0),H);g.fill();
+    g.strokeStyle='#0a9aa8';g.lineWidth=2.2;g.lineJoin='round';g.beginPath();hist.forEach((h,k)=>k?g.lineTo(X(h[0]),Y(h[1])):g.moveTo(X(h[0]),Y(h[1])));g.stroke();
+    g.fillStyle=c+'2a';g.beginPath();fc.forEach((f,k)=>k?g.lineTo(X(f[0]),Y(f[3])):g.moveTo(X(f[0]),Y(f[3])));[...fc].reverse().forEach(f=>g.lineTo(X(f[0]),Y(f[2])));g.fill();
+    g.strokeStyle=c;g.setLineDash([5,4]);g.beginPath();fc.forEach((f,k)=>k?g.lineTo(X(f[0]),Y(f[1])):g.moveTo(X(f[0]),Y(f[1])));g.stroke();g.setLineDash([]);g.restore();
+    g.strokeStyle='#0d1f2a';g.globalAlpha=.5;g.beginPath();g.moveTo(nowX,0);g.lineTo(nowX,H);g.stroke();g.globalAlpha=1;
+    const fv=fc[Math.min(8,week)][1];g.fillStyle='#fff';g.strokeStyle=c;g.lineWidth=2;g.beginPath();g.arc(nowX,Y(fv),4.5,0,7);g.fill();g.stroke();
+    if(p<1)requestAnimationFrame(anim)})(t0);
 }
 
-/* =================== selection =================== */
-function select(s,talk){
-  selected=s;blip(660,.15,'triangle');setTimeout(()=>blip(990,.12),90);
-  focusOn(s);renderList();renderDetail(s);scanT=0;
-  if(talk)speak(s.say,touring?tourNext:null);
-}
-
-/* =================== HOLOGRAM (custom 3D on canvas) =================== */
-const cv=$('#holo'),ctx=cv.getContext('2d');
-let W,H,DPR;
-function resize(){DPR=Math.min(2,devicePixelRatio||1);W=cv.clientWidth;H=cv.clientHeight;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);}
+/* ======================= HOLOGRAM ENGINE ======================= */
+const cv=$('#holo'),ctx=cv.getContext('2d');let W=0,H=0;
+function resize(){const dpr=Math.min(2,devicePixelRatio||1);W=cv.clientWidth;H=cv.clientHeight;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
 addEventListener('resize',()=>{resize();if(selected)drawChart(selected)});
-const GW=40,GD=26,NX=74,NZ=48;
-const toX=lon=>((lon-LON0)/(LON1-LON0)-.5)*GW, toZ=lat=>((lat-LAT0)/(LAT1-LAT0)-.5)*GD;
-function height(x,z){
-  const lon=LON0+(x/GW+.5)*(LON1-LON0),lat=LAT0+(z/GD+.5)*(LAT1-LAT0);
-  let h=.28*Math.sin(x*1.1+z*.5)+.18*Math.sin(x*2.3-z*1.7)+.1*Math.sin(x*4.1+z*3.3);
-  h+= (LAT1-lat<0)?0:0;
-  h+=2.6*Math.exp(-(((lon-55.78)/.12)**2+((lat-24.06)/.18)**2)); // Jebel Hafeet
-  h+=1.4*Math.exp(-(((lon-56.05)/.18)**2)); // Hajar foothills
-  h+= .5*Math.exp(-(((lat-23.1)/.35)**2))*(.6+.4*Math.sin(x*3)); // Liwa crescent dunes (Rub al Khali edge)
-  return h*0.9;
-}
+const GW=40,GD=26,NX=78,NZ=50,AQ=-3.2;
+const toX=lon=>((lon-LON0)/(LON1-LON0)-.5)*GW,toZ=lat=>((lat-LAT0)/(LAT1-LAT0)-.5)*GD;
+const lonOf=x=>LON0+(x/GW+.5)*(LON1-LON0),latOf=z=>LAT0+(z/GD+.5)*(LAT1-LAT0);
 const COAST=[[52.0,24.08],[52.6,24.18],[53.1,24.12],[53.6,24.17],[54.05,24.25],[54.35,24.42],[54.6,24.5],[54.95,24.78],[55.2,25.0]];
-const pts=[];for(let j=0;j<NZ;j++){const row=[];for(let i=0;i<NX;i++){const x=(i/(NX-1)-.5)*GW,z=(j/(NZ-1)-.5)*GD;
-  const lat=LAT0+(z/GD+.5)*(LAT1-LAT0),lon=LON0+(x/GW+.5)*(LON1-LON0);
-  const sea=isSea(lon,lat);row.push([x,sea?-0.15:height(x,z),z,sea]);}pts.push(row);}
-function isSea(lon,lat){for(let k=0;k<COAST.length-1;k++){const[a,b]=COAST[k],[c,d]=COAST[k+1];if(lon>=a&&lon<=c){const cl=b+(d-b)*(lon-a)/(c-a);return lat>cl;}}return lon<COAST[0][0]?lat>COAST[0][1]:lat>25;}
+function isSea(lon,lat){for(let k=0;k<COAST.length-1;k++){const[a,b]=COAST[k],[c,d]=COAST[k+1];if(lon>=a&&lon<=c)return lat>b+(d-b)*(lon-a)/(c-a)}return lon<COAST[0][0]?lat>COAST[0][1]:lat>25}
+function terrainH(x,z){const lon=lonOf(x),lat=latOf(z);
+  let h=.3*Math.sin(x*1.1+z*.5)+.18*Math.sin(x*2.3-z*1.7)+.09*Math.sin(x*4.1+z*3.3);
+  h+=2.8*Math.exp(-(((lon-55.78)/.12)**2+((lat-24.06)/.18)**2));      // Jebel Hafeet
+  h+=1.5*Math.exp(-(((lon-56.05)/.18)**2));                           // Hajar foothills
+  h+=.7*Math.exp(-(((lat-23.05)/.35)**2))*(.6+.4*Math.sin(x*3));       // Liwa megadunes
+  return h*.9}
+const G=[];for(let j=0;j<NZ;j++){const row=[];for(let i=0;i<NX;i++){const x=(i/(NX-1)-.5)*GW,z=(j/(NZ-1)-.5)*GD,sea=isSea(lonOf(x),latOf(z));row.push({x,z,h:sea?-.2:terrainH(x,z),sea,heat:0,hc:[10,154,168]})}G.push(row)}
+function computeHeat(){G.forEach(r=>r.forEach(p=>{let best=0,col=[10,154,168];SITES.forEach(s=>{const st=statusOf(daysAt(s));if(st==='ok')return;const dx=p.x-toX(s.lon),dz=p.z-toZ(s.lat),k=Math.exp(-(dx*dx+dz*dz)/(st==='act'?9:5))*(st==='act'?1:.75);if(k>best){best=k;col=st==='act'?[229,57,79]:[229,148,0]}});p.heat=best;p.hc=col}))}
 
-let cam={yaw:-.35,pitch:.88,dist:34,tx:0,tz:0},tgt={...cam};
-let autoRot=true,lastInteract=0;
-function focusOn(s){tgt.tx=toX(s.lon)*.55;tgt.tz=toZ(s.lat)*.55;tgt.dist=26;}
-function project(x,y,z){
-  x-=cam.tx;z-=cam.tz;
-  const cy=Math.cos(cam.yaw),sy=Math.sin(cam.yaw);let X=x*cy-z*sy,Z=x*sy+z*cy;
-  const cp=Math.cos(cam.pitch),sp=Math.sin(cam.pitch);let Y=y*cp+Z*sp;Z=-y*sp+Z*cp;
-  Z+=cam.dist;const f=Math.min(W,H*1.6)*.95/ Z;
-  return[W/2+X*f,H*.56-Y*f,Z];
-}
-// pointer
-let drag=null;
-cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,yaw:tgt.yaw,pitch:tgt.pitch,moved:false};autoRot=false;lastInteract=performance.now()});
-addEventListener('pointermove',e=>{
-  if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>4)drag.moved=true;
-    tgt.yaw=drag.yaw+dx*.006;tgt.pitch=Math.max(.35,Math.min(1.35,drag.pitch+dy*.004));lastInteract=performance.now();}
-  else if(e.target===cv){const r=cv.getBoundingClientRect();hover=hit(e.clientX-r.left,e.clientY-r.top);cv.style.cursor=hover?'pointer':'grab';}
-});
-addEventListener('pointerup',e=>{if(drag&&!drag.moved){const r=cv.getBoundingClientRect();const s=hit(e.clientX-r.left,e.clientY-r.top);if(s){if(touring)stopTour();select(s,true);}}drag=null;});
-cv.addEventListener('wheel',e=>{e.preventDefault();tgt.dist=Math.max(16,Math.min(52,tgt.dist+e.deltaY*.02));lastInteract=performance.now()},{passive:false});
-let hover=null,screenPos={};
-function hit(mx,my){let best=null,bd=28;SITES.forEach(s=>{const p=screenPos[s.id];if(!p)return;
-  [p.top,p.base,p.mid].forEach(q=>{const d=Math.hypot(q[0]-mx,q[1]-my);if(d<bd){bd=d;best=s}})});return best;}
+let cam={yaw:-.32,pitch:.95,dist:36,tx:0,tz:0},fly=null;
+function flyTo(to,dur=1500){fly={from:{...cam},to:{...cam,...to},t0:performance.now(),dur}}
+function focusOn(s){flyTo({tx:toX(s.lon)*.8,tz:toZ(s.lat)*.8,dist:20,pitch:.82,yaw:cam.yaw+.25})}
+function resetView(){flyTo({tx:0,tz:0,dist:36,pitch:.95,yaw:-.32},1300)}
+function P(x,y,z){x-=cam.tx;z-=cam.tz;const cy=Math.cos(cam.yaw),sy=Math.sin(cam.yaw);let X=x*cy-z*sy,Z=x*sy+z*cy;const cp=Math.cos(cam.pitch),sp=Math.sin(cam.pitch);const Y=y*cp+Z*sp;Z=-y*sp+Z*cp;Z+=cam.dist;const f=Math.min(W,H*1.55)*1.1/Math.max(.5,Z);return[W/2+X*f,H*.57-Y*f,Z,f]}
 
-let scanT=0,particles=[];
-for(let i=0;i<140;i++)particles.push({x:(Math.random()-.5)*GW,z:(Math.random()-.5)*GD,y:Math.random()*8,v:.01+Math.random()*.03});
+let drag=null,hover=null,autoRot=true,lastTouch=0,screenPos={};
+cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,yaw:cam.yaw,pitch:cam.pitch,moved:false};fly=null;lastTouch=performance.now();cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointermove',e=>{const r=cv.getBoundingClientRect();
+  if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>4)drag.moved=true;cam.yaw=drag.yaw+dx*.006;cam.pitch=Math.max(.4,Math.min(1.35,drag.pitch+dy*.004));lastTouch=performance.now()}
+  else{hover=hit(e.clientX-r.left,e.clientY-r.top);cv.style.cursor=hover?'pointer':'grab'}});
+cv.addEventListener('pointerup',e=>{const r=cv.getBoundingClientRect();if(drag&&!drag.moved){const s=hit(e.clientX-r.left,e.clientY-r.top);if(s){if(touring)stopTour();select(s,true)}}drag=null});
+cv.addEventListener('wheel',e=>{e.preventDefault();fly=null;cam.dist=Math.max(12,Math.min(54,cam.dist+e.deltaY*.02));lastTouch=performance.now()},{passive:false});
+function hit(mx,my){let best=null,bd=30;SITES.forEach(s=>{const p=screenPos[s.id];if(!p)return;[p.base,p.top,p.label].forEach(q=>{const d=Math.hypot(q[0]-mx,q[1]-my);if(d<bd){bd=d;best=s}})});return best}
+$('#zoomIn').onclick=()=>flyTo({dist:Math.max(12,cam.dist*.75)},600);
+$('#zoomOut').onclick=()=>flyTo({dist:Math.min(54,cam.dist*1.3)},600);
+$('#resetBtn').onclick=()=>{selected=null;renderList();emptyDetail();$('#focusTag').classList.remove('show');stopVoice();resetView()};
+
+const particles=Array.from({length:120},()=>({x:(Math.random()-.5)*GW,z:(Math.random()-.5)*GD,y:Math.random()*7,v:.008+Math.random()*.02}));
+let bootT0=0,scanT=9,pulses=[];
+const rgba=(c,a)=>`rgba(${c[0]},${c[1]},${c[2]},${a})`;
+const hex2=h=>{const n=parseInt(h.slice(1),16);return[n>>16,n>>8&255,n&255]};
 
 function frame(t){
-  const now=performance.now();
-  if(!drag&&now-lastInteract>4000)autoRot=true;
-  if(autoRot&&!selected)tgt.yaw+=.0016;
-  if(autoRot&&selected)tgt.yaw+=.0006;
-  for(const k in tgt)cam[k]+=(tgt[k]-cam[k])*.06;
+  if(fly){const k=Math.min(1,(t-fly.t0)/fly.dur),e=ease(k);for(const key in fly.to)cam[key]=fly.from[key]+(fly.to[key]-fly.from[key])*e;cam.dist+=Math.sin(k*Math.PI)*5;if(k>=1){cam.dist=fly.to.dist;fly=null}}
+  else if(!drag&&t-lastTouch>3500){cam.yaw+=selected?.0007:.0018}
   ctx.clearRect(0,0,W,H);
-  const flick=.85+.15*Math.sin(t*.013)*Math.sin(t*.0031);
-
-  // base disc
-  const c0=project(0,-.4,0);
-  // grid lines (rows)
-  ctx.lineWidth=1;
-  const P=pts.map(r=>r.map(p=>project(p[0],p[1],p[2])));
-  for(let j=0;j<NZ;j+=1){
-    ctx.beginPath();let zA=0;
-    for(let i=0;i<NX;i++){const q=P[j][i];zA+=q[2];i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]);}
-    zA/=NX;const a=Math.max(.05,Math.min(.55,(60-zA)/50))*flick;
-    ctx.strokeStyle=`rgba(0,240,255,${a*.8})`;ctx.stroke();
-  }
-  for(let i=0;i<NX;i+=2){
-    ctx.beginPath();for(let j=0;j<NZ;j++){const q=P[j][i];j?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]);}
-    ctx.strokeStyle=`rgba(0,240,255,${.12*flick})`;ctx.stroke();
-  }
-  // sea shading dots
-  ctx.fillStyle='rgba(60,140,255,.35)';
-  for(let j=0;j<NZ;j+=2)for(let i=0;i<NX;i+=2)if(pts[j][i][3]){const q=P[j][i];ctx.fillRect(q[0]-1,q[1]-1,2,2);}
-  // coastline
-  ctx.beginPath();COAST.forEach((c,k)=>{const x=toX(c[0]),z=toZ(Math.min(c[1],LAT1));const q=project(x,0,z);k?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])});
-  ctx.strokeStyle='rgba(120,190,255,.9)';ctx.lineWidth=2;ctx.shadowColor='#4af';ctx.shadowBlur=10;ctx.stroke();ctx.shadowBlur=0;ctx.lineWidth=1;
-  // region labels
-  ctx.font='600 10px "JetBrains Mono", monospace';ctx.fillStyle='rgba(120,190,255,.7)';
-  let q=project(toX(53.2),0,toZ(24.6));ctx.fillText('ARABIAN GULF',q[0],q[1]);
-  ctx.fillStyle='rgba(255,181,71,.55)';q=project(toX(53.0),0,toZ(22.9));ctx.fillText('RUB AL KHALI ·  EMPTY QUARTER',q[0],q[1]);
-  q=project(toX(54.37),0,toZ(24.45));ctx.fillStyle='rgba(234,255,255,.7)';ctx.fillText('◆ Abu Dhabi',q[0],q[1]);
-  q=project(toX(55.76),height(toX(55.76),toZ(24.2)),toZ(24.2));ctx.fillText('◆ Al Ain',q[0],q[1]);
-  // particles
-  particles.forEach(p=>{p.y+=p.v;if(p.y>8)p.y=0;const s=project(p.x,p.y,p.z);ctx.fillStyle=`rgba(0,240,255,${.5*(1-p.y/8)})`;ctx.fillRect(s[0],s[1],1.5,1.5)});
-
-  // flow lines between sharing sites
-  const links=[['liwa','gh'],['quaa','rm']];
-  links.forEach(([a,b],k)=>{const A=SITES.find(s=>s.id===a),B=SITES.find(s=>s.id===b);
-    const ax=toX(A.lon),az=toZ(A.lat),bx=toX(B.lon),bz=toZ(B.lat);
-    ctx.beginPath();for(let i=0;i<=30;i++){const u=i/30,x=ax+(bx-ax)*u,z=az+(bz-az)*u,y=height(x,z)+Math.sin(u*Math.PI)*2.2;const s=project(x,y,z);i?ctx.lineTo(s[0],s[1]):ctx.moveTo(s[0],s[1]);}
-    ctx.strokeStyle='rgba(255,181,71,.35)';ctx.setLineDash([3,5]);ctx.stroke();ctx.setLineDash([]);
-    const u=((t*.00025+k*.5)%1),x=ax+(bx-ax)*u,z=az+(bz-az)*u,y=height(x,z)+Math.sin(u*Math.PI)*2.2,s=project(x,y,z);
-    ctx.fillStyle='#ffb547';ctx.shadowColor='#ffb547';ctx.shadowBlur=12;ctx.beginPath();ctx.arc(s[0],s[1],3,0,7);ctx.fill();ctx.shadowBlur=0;
-  });
-
-  // beacons (sort far to near)
-  const order=[...SITES].sort((a,b)=>project(toX(b.lon),0,toZ(b.lat))[2]-project(toX(a.lon),0,toZ(a.lat))[2]);
+  const boot=ease(Math.min(1,(t-bootT0)/2600));               // terrain rises on load
+  const sweepX=((t*.004)%(GW+16))-GW/2-8;                      // scan band crossing terrain
+  // --- projector disc / shadow
+  const c0=P(0,-.3,0);ctx.save();ctx.translate(c0[0],c0[1]);ctx.scale(1,.32);const rg=ctx.createRadialGradient(0,0,0,0,0,c0[3]*GW*.62);rg.addColorStop(0,'rgba(10,154,168,.10)');rg.addColorStop(1,'rgba(10,154,168,0)');ctx.fillStyle=rg;ctx.beginPath();ctx.arc(0,0,c0[3]*GW*.62,0,7);ctx.fill();ctx.restore();
+  // --- aquifer layer (underground)
+  ctx.lineWidth=1;ctx.strokeStyle='rgba(40,110,220,.13)';
+  for(let j=0;j<NZ;j+=5){ctx.beginPath();for(let i=0;i<NX;i+=3){const p=G[j][i],q=P(p.x,AQ+.12*Math.sin(t*.0015+p.x*.4+p.z*.3),p.z);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}ctx.stroke()}
+  for(let i=0;i<NX;i+=6){ctx.beginPath();for(let j=0;j<NZ;j+=2){const p=G[j][i],q=P(p.x,AQ+.12*Math.sin(t*.0015+p.x*.4+p.z*.3),p.z);j?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}ctx.stroke()}
+  // --- terrain (project once)
+  const PP=G.map((r,j)=>r.map(p=>{const h=p.h*boot*(1-.0*j);return P(p.x,h,p.z)}));
+  const reveal=Math.floor(boot*NZ*1.2);
+  for(let j=0;j<NZ&&j<reveal;j++){ctx.beginPath();let za=0;for(let i=0;i<NX;i++){const q=PP[j][i];za+=q[2];i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}za/=NX;
+    const a=Math.max(.06,Math.min(.42,(62-za)/55));ctx.strokeStyle=`rgba(8,120,135,${a})`;ctx.stroke()}
+  for(let i=0;i<NX;i+=2){ctx.beginPath();for(let j=0;j<NZ&&j<reveal;j++){const q=PP[j][i];j?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}ctx.strokeStyle='rgba(8,120,135,.10)';ctx.stroke()}
+  // --- vertex dots: sea, heat, height tint, scan band
+  for(let j=0;j<NZ&&j<reveal;j++)for(let i=0;i<NX;i++){const p=G[j][i],q=PP[j][i];
+    const inScan=Math.abs(p.x-sweepX)<1.1;
+    if(p.sea){if((i+j)%2===0){ctx.fillStyle='rgba(60,130,230,.45)';ctx.fillRect(q[0]-1,q[1]-1,2,2)}continue}
+    if(p.heat>.08){const pul=.65+.35*Math.sin(t*.004+p.x);ctx.fillStyle=rgba(p.hc,Math.min(.85,p.heat*pul));const s=1.2+p.heat*2.2;ctx.fillRect(q[0]-s/2,q[1]-s/2,s,s)}
+    else if(p.h>1.1){ctx.fillStyle=`rgba(192,138,62,${Math.min(.6,(p.h-1)*.35)})`;ctx.fillRect(q[0]-1,q[1]-1,2,2)}
+    if(inScan){ctx.fillStyle='rgba(10,190,205,.75)';ctx.fillRect(q[0]-1.3,q[1]-1.3,2.6,2.6)}}
+  // --- coastline
+  ctx.beginPath();COAST.forEach((c,k)=>{const q=P(toX(c[0]),0,toZ(Math.min(c[1],LAT1)));k?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])});ctx.strokeStyle='rgba(40,110,220,.75)';ctx.lineWidth=2;ctx.stroke();ctx.lineWidth=1;
+  // --- place labels
+  ctx.font='600 10px "IBM Plex Mono",monospace';
+  const lab=(txt,lon,lat,col)=>{const q=P(toX(lon),terrainH(toX(lon),toZ(lat))*boot,toZ(lat));ctx.fillStyle=col;ctx.fillText(txt,q[0],q[1])};
+  lab('ARABIAN GULF',53.0,24.75,'rgba(40,110,220,.6)');lab('RUB AL KHALI · EMPTY QUARTER',52.9,22.88,'rgba(170,115,40,.65)');lab('◆ ABU DHABI',54.37,24.45,'rgba(13,31,42,.55)');lab('◆ AL AIN',55.76,24.22,'rgba(13,31,42,.55)');
+  // --- particles
+  particles.forEach(p=>{p.y+=p.v;if(p.y>7)p.y=0;const q=P(p.x,p.y,p.z);ctx.fillStyle=`rgba(10,154,168,${.45*(1-p.y/7)*boot})`;ctx.fillRect(q[0],q[1],1.6,1.6)});
+  // --- water-sharing arcs
+  [['liwa','gh'],['quaa','rm']].forEach(([a,b],k)=>{const A=SITES.find(s=>s.id===a),B=SITES.find(s=>s.id===b),ax=toX(A.lon),az=toZ(A.lat),bx=toX(B.lon),bz=toZ(B.lat);
+    const pt=u=>{const x=ax+(bx-ax)*u,z=az+(bz-az)*u;return P(x,terrainH(x,z)*boot+Math.sin(u*Math.PI)*2.6,z)};
+    ctx.beginPath();for(let i=0;i<=40;i++){const q=pt(i/40);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}ctx.strokeStyle='rgba(229,148,0,.45)';ctx.setLineDash([3,5]);ctx.stroke();ctx.setLineDash([]);
+    for(let m=0;m<3;m++){const u=((t*.00022+k*.4+m*.33)%1),q=pt(u);ctx.fillStyle='#e59400';ctx.beginPath();ctx.arc(q[0],q[1],2.6,0,7);ctx.fill()}});
+  // --- beacons (far → near)
+  const order=[...SITES].sort((a,b)=>P(toX(b.lon),0,toZ(b.lat))[2]-P(toX(a.lon),0,toZ(a.lat))[2]);
   order.forEach(s=>{
-    const x=toX(s.lon),z=toZ(s.lat),h=height(x,z);const d=daysAt(s),st=statusOf(d),col=COL[st];
-    const isSel=selected===s,isHov=hover===s;
-    const bh=2.2+Math.max(0,Math.min(1,1-d/150))*3.8;
-    const base=project(x,h,z),top=project(x,h+bh,z),mid=project(x,h+bh/2,z);
-    screenPos[s.id]={base,top,mid};
-    // rings
-    const pulse=(t*.001+SITES.indexOf(s)*.3)%1;
-    for(let k=0;k<(isSel?3:1);k++){
-      const pr=((pulse+k/3)%1);const R=.4+pr*(isSel?3.2:1.8);
-      ctx.beginPath();for(let a=0;a<=32;a++){const an=a/32*Math.PI*2,pp=project(x+Math.cos(an)*R,h+.02,z+Math.sin(an)*R);a?ctx.lineTo(pp[0],pp[1]):ctx.moveTo(pp[0],pp[1]);}
-      ctx.strokeStyle=hexA(col,(1-pr)*.9);ctx.lineWidth=isSel?2:1.2;
-      if(s.sensor==='off')ctx.setLineDash([3,4]);ctx.stroke();ctx.setLineDash([]);
-    }
-    // beam
-    const gr=ctx.createLinearGradient(base[0],base[1],top[0],top[1]);gr.addColorStop(0,hexA(col,.95));gr.addColorStop(1,hexA(col,0));
-    ctx.strokeStyle=gr;ctx.lineWidth=isSel||isHov?5:3;ctx.shadowColor=col;ctx.shadowBlur=18;
-    ctx.beginPath();ctx.moveTo(base[0],base[1]);ctx.lineTo(top[0],top[1]);ctx.stroke();
-    // core
-    ctx.fillStyle=col;ctx.beginPath();ctx.arc(base[0],base[1],isSel?6:4,0,7);ctx.fill();
-    // floating diamond
-    const fy=Math.sin(t*.003+SITES.indexOf(s))*.25;const dm=project(x,h+bh+.4+fy,z);
-    ctx.save();ctx.translate(dm[0],dm[1]);ctx.rotate(t*.002);ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.strokeRect(-5,-5,10,10);ctx.restore();
-    ctx.shadowBlur=0;
-    // label
-    const lx=dm[0]+12,ly=dm[1]-6;
-    ctx.font=`700 ${isSel?13:11}px Inter, system-ui, sans-serif`;ctx.fillStyle=isSel||isHov?'#fff':'rgba(234,255,255,.85)';ctx.fillText(s.name,lx,ly);
-    ctx.font='600 10px "JetBrains Mono", monospace';ctx.fillStyle=col;ctx.fillText(`${d>0?d+' DAYS':'DRY'} · ${LBL[st]}${s.sensor==='off'?' · SENSOR OFF':''}`,lx,ly+13);
-    ctx.strokeStyle=hexA(col,.5);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(dm[0]+4,dm[1]-2);ctx.lineTo(lx-2,ly-4);ctx.stroke();
+    const x=toX(s.lon),z=toZ(s.lat),h=terrainH(x,z)*boot,d=daysAt(s),st=statusOf(d),col=hex2(COL[st]),isSel=selected===s,isHov=hover===s;
+    const bh=(2.4+Math.max(0,Math.min(1,1-d/150))*4)*boot;
+    const base=P(x,h,z),top=P(x,h+bh,z),aq=P(x,AQ,z);
+    // drill column down to aquifer with water level fill
+    const lvl=Math.max(.05,Math.min(1,d/150)),wl=P(x,AQ+lvl*(h-AQ)*.85,z);
+    ctx.strokeStyle='rgba(13,31,42,.18)';ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(base[0],base[1]);ctx.lineTo(aq[0],aq[1]);ctx.stroke();ctx.setLineDash([]);
+    ctx.strokeStyle='rgba(40,110,220,.75)';ctx.lineWidth=isSel?4:3;ctx.beginPath();ctx.moveTo(aq[0],aq[1]);ctx.lineTo(wl[0],wl[1]);ctx.stroke();
+    ctx.fillStyle='rgba(40,110,220,.9)';ctx.beginPath();ctx.ellipse(wl[0],wl[1],5,2,0,0,7);ctx.fill();
+    // ground rings
+    const ring=(R,a,w,dash)=>{ctx.beginPath();for(let k=0;k<=40;k++){const an=k/40*Math.PI*2,q=P(x+Math.cos(an)*R,h+.03,z+Math.sin(an)*R);k?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}ctx.strokeStyle=rgba(col,a);ctx.lineWidth=w;if(dash)ctx.setLineDash([3,4]);ctx.stroke();ctx.setLineDash([])};
+    const ph=((t*.0009)+SITES.indexOf(s)*.27)%1;
+    ring(.35+ph*(isSel?3.4:1.9),(1-ph)*.8,isSel?2:1.3,s.sensor==='off');
+    if(isSel){ring(.35+((ph+.5)%1)*3.4,(1-(ph+.5)%1)*.8,2,s.sensor==='off');
+      // rotating hex lock-on ring
+      ctx.beginPath();for(let k=0;k<=6;k++){const an=k/6*Math.PI*2+t*.001,q=P(x+Math.cos(an)*1.3,h+.05,z+Math.sin(an)*1.3);k?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}ctx.strokeStyle=rgba(col,.9);ctx.lineWidth=1.6;ctx.stroke()}
+    // light beam
+    const gr=ctx.createLinearGradient(base[0],base[1],top[0],top[1]);gr.addColorStop(0,rgba(col,.95));gr.addColorStop(1,rgba(col,0));
+    ctx.strokeStyle=gr;ctx.lineWidth=isSel||isHov?7:4.5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(base[0],base[1]);ctx.lineTo(top[0],top[1]);ctx.stroke();
+    ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(base[0],base[1]);ctx.lineTo(top[0]*.3+base[0]*.7,top[1]*.3+base[1]*.7);ctx.stroke();ctx.lineCap='butt';
+    ctx.fillStyle=rgba(col,1);ctx.beginPath();ctx.arc(base[0],base[1],isSel?6:4.5,0,7);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(base[0],base[1],isSel?2.5:1.8,0,7);ctx.fill();
+    // floating rotating diamond
+    const fy=Math.sin(t*.0028+SITES.indexOf(s))*.3,dm=P(x,h+bh+.5+fy,z);
+    ctx.save();ctx.translate(dm[0],dm[1]);ctx.rotate(t*.0016);ctx.strokeStyle=rgba(col,1);ctx.lineWidth=1.8;ctx.strokeRect(-5,-5,10,10);ctx.fillStyle=rgba(col,.2);ctx.fillRect(-5,-5,10,10);ctx.restore();
+    // label pill
+    const name=s.name,sub=`${d>0?d+' DAYS':'DRY'} · ${LBL[st]}${s.sensor==='off'?' · SENSOR OFF':''}`;
+    ctx.font=`700 ${isSel?12.5:11}px Inter,system-ui,sans-serif`;const w1=ctx.measureText(name).width;ctx.font='600 9.5px "IBM Plex Mono",monospace';const w2=ctx.measureText(sub).width;
+    const bw=Math.max(w1,w2)+18,lx=dm[0]+12,ly=dm[1]-24;
+    ctx.globalAlpha=boot;ctx.fillStyle=isSel||isHov?'#fff':'rgba(255,255,255,.88)';ctx.strokeStyle=isSel?rgba(col,1):'rgba(13,31,42,.1)';ctx.lineWidth=isSel?1.5:1;
+    ctx.beginPath();ctx.roundRect(lx,ly,bw,34,8);ctx.fill();ctx.stroke();
+    ctx.fillStyle=rgba(col,1);ctx.fillRect(lx,ly+8,3,18);
+    ctx.fillStyle='#0d1f2a';ctx.font=`700 ${isSel?12.5:11}px Inter,system-ui,sans-serif`;ctx.fillText(name,lx+10,ly+14);
+    ctx.fillStyle=rgba(col,1);ctx.font='600 9.5px "IBM Plex Mono",monospace';ctx.fillText(sub,lx+10,ly+27);ctx.globalAlpha=1;
+    screenPos[s.id]={base,top,label:[lx+bw/2,ly+17]};
   });
-
-  // radar scan sweep from selected
-  if(selected){scanT+=.012;const x=toX(selected.lon),z=toZ(selected.lat);
-    if(scanT<1.6){const R=scanT*14;ctx.beginPath();for(let a=0;a<=60;a++){const an=a/60*Math.PI*2,pp=project(x+Math.cos(an)*R,.1,z+Math.sin(an)*R);a?ctx.lineTo(pp[0],pp[1]):ctx.moveTo(pp[0],pp[1]);}
-      ctx.strokeStyle=`rgba(0,240,255,${Math.max(0,.6-scanT*.38)})`;ctx.lineWidth=2;ctx.stroke();}}
-
-  // compass HUD
-  ctx.save();ctx.translate(W-60,H-150);ctx.strokeStyle='rgba(0,240,255,.5)';ctx.beginPath();ctx.arc(0,0,24,0,7);ctx.stroke();
-  ctx.rotate(-cam.yaw);ctx.fillStyle='#00f0ff';ctx.beginPath();ctx.moveTo(0,-20);ctx.lineTo(5,0);ctx.lineTo(-5,0);ctx.fill();ctx.font='700 10px Orbitron';ctx.fillText('N',-4,-26);ctx.restore();
+  // --- selection radar pulse
+  pulses=pulses.filter(p=>p.k<1);pulses.forEach(p=>{p.k+=.011;const R=p.k*15;ctx.beginPath();for(let k=0;k<=64;k++){const an=k/64*Math.PI*2,q=P(p.x+Math.cos(an)*R,.1,p.z+Math.sin(an)*R);k?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}ctx.strokeStyle=`rgba(10,154,168,${(1-p.k)*.6})`;ctx.lineWidth=2;ctx.stroke()});
+  // --- compass
+  ctx.save();ctx.translate(W-46,H-210);ctx.fillStyle='#fff';ctx.strokeStyle='rgba(13,31,42,.12)';ctx.beginPath();ctx.arc(0,0,20,0,7);ctx.fill();ctx.stroke();ctx.rotate(-cam.yaw);ctx.fillStyle='#e5394f';ctx.beginPath();ctx.moveTo(0,-14);ctx.lineTo(4.5,0);ctx.lineTo(-4.5,0);ctx.fill();ctx.fillStyle='#8aa0ab';ctx.beginPath();ctx.moveTo(0,14);ctx.lineTo(4.5,0);ctx.lineTo(-4.5,0);ctx.fill();ctx.restore();
+  ctx.fillStyle='#5d7380';ctx.font='700 9px "IBM Plex Mono",monospace';ctx.fillText('N',W-49,H-236);
   requestAnimationFrame(frame);
 }
-function hexA(h,a){const n=parseInt(h.slice(1),16);return`rgba(${n>>16},${n>>8&255},${n&255},${a})`;}
 
-/* =================== timeline =================== */
-function setDateLbl(){const d=new Date();d.setDate(d.getDate()+week*7);$('#dateLbl').textContent=d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});}
-$('#week').addEventListener('input',e=>{week=+e.target.value;$('#wk').textContent=week;setDateLbl();blip(400+week*60,.05,'square',.02);renderList();if(selected)renderDetail(selected);});
-
-/* =================== tour =================== */
+/* ======================= selection & tour ======================= */
+function select(s,talk){
+  selected=s;blip(660,.14,'triangle');setTimeout(()=>blip(990,.1),80);
+  pulses.push({x:toX(s.lon),z:toZ(s.lat),k:0});
+  $('#hint').style.opacity=0;$('#focusTag').classList.remove('show');
+  const det=$('#details');det.classList.add('loading');renderList();renderDetail(s);focusOn(s);
+  $('#coordChip').textContent=`${fmtDeg(s.lat,'N')} / ${fmtDeg(s.lon,'E')}`;
+  $('#focusTitle').textContent=`${s.code} · SITE LOCKED`;$('#focusSub').textContent=`${s.lat.toFixed(4)}° N · ${s.lon.toFixed(4)}° E`;
+  setTimeout(()=>{det.classList.remove('loading');$('#focusTag').classList.add('show');if(selected===s)drawChart(s)},1100);
+  if(talk)setTimeout(()=>{if(selected===s)speak(s.say,touring?tourNext:null)},400);
+}
 let tourIdx=-1;
-const TOUR=['liwa','quaa','mz','sw','gh','rm'];
-function startTour(){touring=true;tourIdx=-1;$('#tourBtn').textContent='■ Stop briefing';
-  selected=null;tgt={yaw:-.35,pitch:.88,dist:34,tx:0,tz:0};renderList();
-  speak(INTRO,tourNext);}
-function tourNext(){if(!touring)return;tourIdx++;if(tourIdx>=TOUR.length){touring=false;$('#tourBtn').textContent='▶ Guided briefing';
-  speak("That's the full chain, from satellite and sensor data, to a prediction with an honest confidence range, to a warning a herder can act on, weeks before the crisis. SAQI. Because the first warning shouldn't be an empty bucket.");return;}
-  setTimeout(()=>{if(touring)select(SITES.find(s=>s.id===TOUR[tourIdx]),true)},700);}
-function stopTour(){touring=false;stopVoice();$('#tourBtn').textContent='▶ Guided briefing';}
+function startTour(){touring=true;tourIdx=-1;$('#tourBtn').textContent='■ STOP TOUR';selected=null;renderList();emptyDetail();resetView();speak(INTRO,tourNext)}
+function tourNext(){if(!touring)return;tourIdx++;if(tourIdx>=SITES.length){touring=false;$('#tourBtn').textContent='▶ AUTO TOUR';resetView();speak(OUTRO);return}setTimeout(()=>{if(touring)select(SITES[tourIdx],true)},500)}
+function stopTour(){touring=false;stopVoice();$('#tourBtn').textContent='▶ AUTO TOUR'}
 $('#tourBtn').onclick=()=>touring?stopTour():startTour();
-$('#muteBtn').onclick=()=>{voiceOn=!voiceOn;$('#muteBtn').textContent=voiceOn?'🔊 Voice on':'🔇 Captions only';if(!voiceOn)try{speechSynthesis.cancel()}catch(e){}};
+$('#howBtn').onclick=()=>$('#how').classList.remove('hide');
+$('#closeHow').onclick=()=>$('#how').classList.add('hide');
+$('#how').onclick=e=>{if(e.target.id==='how')$('#how').classList.add('hide')};
 
-/* =================== intro boot =================== */
-const BOOT=['> linking GRACE-FO groundwater ......... OK','> Sentinel-2 / Sentinel-1 tiles ........ OK','> CHIRPS rainfall · ERA5 climate ........ OK','> 6 well sensors .......... 5 live / 1 OFFLINE','> herder SMS gateway ..................... OK','> forecast engine ready.'];
-(function boot(i=0){if(i>=BOOT.length)return;$('#boot').textContent+=BOOT[i]+'\n';setTimeout(()=>boot(i+1),280)})();
-function enter(withVoice){blip(520,.2,'sawtooth',.04);$('#intro').style.transition='opacity .6s';$('#intro').style.opacity=0;setTimeout(()=>$('#intro').remove(),600);
-  if(withVoice)setTimeout(startTour,500);}
-$('#enterVoice').onclick=()=>enter(true);$('#enterSilent').onclick=()=>{voiceOn=true;enter(false)};
+/* ======================= timeline ======================= */
+function setDate(){const d=new Date();d.setDate(d.getDate()+week*7);$('#dateLbl').textContent=d.toLocaleDateString('en-GB',{day:'numeric',month:'short'}).toUpperCase();$('#horizonPill').textContent=week?`+${week} WEEKS`:'TODAY'}
+$('#week').oninput=e=>{week=+e.target.value;$('#wk').textContent=week;setDate();blip(380+week*55,.05,'square',.015);computeHeat();renderList();if(selected)renderDetail(selected)};
 
-/* reveal on scroll */
-const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){[...e.target.querySelectorAll('.step')].forEach((s,i)=>setTimeout(()=>s.classList.add('vis'),i*180));}}),{threshold:.2});
-io.observe($('.pipe'));
+/* ======================= intro ======================= */
+const BOOT=['› GRACE-FO groundwater ............ linked','› Sentinel-2 / Sentinel-1 tiles .... linked','› CHIRPS rainfall · ERA5 climate .... linked','› 6 well sensors ......... 5 live · 1 OFFLINE','› herder SMS gateway ............... ready','› forecast engine .................. ready ✓'];
+(function bootLine(i=0){if(i>=BOOT.length)return;$('#boot').textContent+=BOOT[i]+'\n';setTimeout(()=>bootLine(i+1),260)})();
+function enter(tour){blip(520,.18,'triangle');$('#intro').classList.add('hide');setTimeout(()=>$('#intro').remove(),600);bootT0=performance.now();if(tour)setTimeout(startTour,700)}
+$('#enterVoice').onclick=()=>enter(true);$('#enterSilent').onclick=()=>enter(false);
+addEventListener('keydown',e=>{if(e.key==='Escape'){$('#how').classList.add('hide');if(touring)stopTour()}});
 
-resize();setDateLbl();renderList();requestAnimationFrame(frame);
+resize();computeHeat();setDate();renderList();emptyDetail();bootT0=performance.now();requestAnimationFrame(frame);
 </script>
 </body>
 </html>
