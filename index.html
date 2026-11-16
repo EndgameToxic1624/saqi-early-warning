@@ -291,6 +291,8 @@ body{font-family:var(--sans);font-variant-numeric:tabular-nums;background:var(--
 #caption .avatar{width:28px;height:28px}#caption .avatar i{height:9px}#caption .who{display:none}#capText{font-size:14px;line-height:1.45}
 .horizon span,.locchip b,.locchip span{white-space:nowrap}.subbar{flex-wrap:wrap;justify-content:flex-start}
 @media(max-width:1440px){.locchip span{display:none}}
+.stopbtn{flex:0 0 auto;padding-left:16px;padding-right:16px;border-color:#e5394f;color:#e5394f}.stopbtn:hover{background:#fdecee}
+.capstop{pointer-events:auto;flex:none;border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 12px;font:600 12px var(--sans);color:#e5394f;transition:.2s}.capstop:hover{background:#fdecee;border-color:#e5394f}
 </style>
 </head>
 <body>
@@ -383,7 +385,7 @@ body{font-family:var(--sans);font-variant-numeric:tabular-nums;background:var(--
     </div>
     <div class="hint" id="hint">Click a beacon to zoom into its problem. Drag to rotate.</div>
     <div class="focus-tag" id="focusTag"><strong id="focusTitle">SITE LOCKED</strong><span id="focusSub"></span></div>
-    <div id="caption"><div class="avatar"><i></i><i></i><i></i></div><div><div class="who">SAQI guide</div><div id="capText"></div></div></div>
+    <div id="caption"><div class="avatar"><i></i><i></i><i></i></div><div style="flex:1"><div class="who">SAQI guide</div><div id="capText"></div></div><button class="capstop" id="capStop" aria-label="Stop narration" title="Stop narration">■ Stop</button></div>
     
     <div class="toast" id="toast"></div>
   </main>
@@ -502,6 +504,7 @@ $('#voiceToggle').onclick=e=>{voiceOn=!voiceOn;e.currentTarget.textContent=voice
 // detect recorded human voice files
 (function probe(){const a=new Audio();a.preload='metadata';a.oncanplaythrough=a.onloadedmetadata=()=>{$('#audioBadge').classList.add('on');$('#voiceSel').style.display='none'};a.src=AUDIO_DIR+'intro.mp3'})();
 
+function stopNarration(){if(touring)stopTour();else stopVoice()}
 function stopVoice(){speakTok++;try{speechSynthesis.cancel()}catch(e){}if(curAudio){curAudio.pause();curAudio=null}$('#caption').classList.remove('on')}
 function speak(text,onDone,key){
   stopVoice();const tok=speakTok;
@@ -571,7 +574,7 @@ function renderDetail(s){
     <div class="sms"><div class="hdr"><span>SAQI 4040</span><span>14:05</span></div>
      <div class="bubble ar" id="smsAr"></div><div class="bubble en" id="smsEn"></div></div>
     <div class="btnrow"><button class="btn sendbtn" id="sendBtn">Preview the warning</button></div>
-    <div class="btnrow"><button class="btn ghost" id="replay">Replay narration</button><button class="btn ghost" id="nextS">Next well</button></div>
+    <div class="btnrow"><button class="btn ghost" id="replay">▶ Replay</button><button class="btn ghost stopbtn" id="stopNar">■ Stop</button><button class="btn ghost" id="nextS">Next well</button></div>
     <p class="fine">Demo only. No real message is sent and no live wells are monitored. Forecasts are simulated for real places.</p></section>
   </div></div>`;
   requestAnimationFrame(()=>$('#confI').style.width=s.conf+'%');
@@ -579,6 +582,7 @@ function renderDetail(s){
   drawChart(s);
   $('#sendBtn').onclick=()=>{blip(1200,.1);toast(`✓ ${s.people.toLocaleString()} people would get this SMS and an Arabic voice call. Nothing was actually sent.`)};
   $('#replay').onclick=()=>speak(s.say,null,s.id);
+  $('#stopNar').onclick=stopNarration;
   $('#nextS').onclick=()=>select(SITES[(i+1)%SITES.length],true);
 }
 function typeText(el,t,ms){let k=0;el.textContent='';const iv=setInterval(()=>{el.textContent=t.slice(0,++k);if(k>=t.length)clearInterval(iv)},ms)}
@@ -828,6 +832,7 @@ function startTour(){touring=true;tourIdx=-1;$('#tourBtn').textContent='■ Stop
 function tourNext(){if(!touring)return;tourIdx++;if(tourIdx>=SITES.length){touring=false;$('#tourBtn').textContent='▶ Play guided tour';resetView();speak(OUTRO,null,'outro');return}setTimeout(()=>{if(touring)select(SITES[tourIdx],true)},500)}
 function stopTour(){touring=false;stopVoice();$('#tourBtn').textContent='▶ Play guided tour'}
 $('#tourBtn').onclick=()=>touring?stopTour():startTour();
+$('#capStop').onclick=stopNarration;
 $('#howBtn').onclick=()=>$('#how').classList.remove('hide');
 $('#closeHow').onclick=()=>$('#how').classList.add('hide');
 $('#how').onclick=e=>{if(e.target.id==='how')$('#how').classList.add('hide')};
