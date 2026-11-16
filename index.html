@@ -377,6 +377,12 @@ body{font-family:var(--sans);font-variant-numeric:tabular-nums;background:var(--
 .main.fsmap{position:fixed!important;inset:0;z-index:50;border-radius:0}
 #main:fullscreen{border-radius:0;width:100vw;height:100vh}
 #holo{background:radial-gradient(ellipse at 50% 40%,#16323a 0%,#0b1418 55%,#060a0c 100%)!important}
+
+.brief{margin-top:18px;border:1px solid var(--line);border-radius:14px;padding:16px 18px;background:var(--panel2,#f6fafb)}
+.brief h3{margin:0 0 8px;font:700 16px var(--sans)}
+.brief ol{margin:0;padding-left:20px;display:grid;gap:7px}
+.brief li{font:400 13.5px/1.5 var(--sans);color:var(--ink2,#3b4d58)}
+.brief li b{color:var(--ink,#0d1f2a)}
 </style>
 </head>
 <body>
@@ -409,13 +415,23 @@ body{font-family:var(--sans);font-variant-numeric:tabular-nums;background:var(--
     <div class="grid3">
       <div class="rule"><h4>⌁ When a sensor dies</h4><p>Sweihan's sensor has been silent for 6 days. SAQI switches to satellite data and herder reports, widens the forecast range from ±9 to ±35 days, labels the forecast <b>DEGRADED</b>, and raises a repair ticket.</p></div>
       <div class="rule"><h4>☁ When the image is cloudy</h4><p>Sentinel-1 radar sees through cloud, and the last clear 10-day composite fills any gaps. GRACE groundwater data is never blocked by cloud.</p></div>
-      <div class="rule"><h4>⚖ Trust vs. lives</h4><p>Early Watch notices go out easily because they cost little. Costly actions such as rationing or sending trucks need two signals to agree. Each well's false-alarm rate is public.</p></div>
+      <div class="rule"><h4>⚖ Trust vs. lives</h4><p>A false alarm costs trust; a missed one costs lives. So early Watch notices go out easily, because they cost little, while costly actions such as rationing or sending trucks need two independent signals to agree. Herders' replies show when a warning was wrong, so it can be tuned.</p></div>
     </div>
     <div class="ladder">
       <div><h4 style="color:var(--ok)">STABLE</h4><code>P(fail ≤ 8w) &lt; 20%</code><p>Dashboard only, plus a weekly digest.</p></div>
       <div><h4 style="color:var(--teal2)">WATCH</h4><code>P(fail ≤ 8w) ≥ 20%</code><p>The council gets a heads-up and herders are asked to report what they see.</p></div>
       <div><h4 style="color:var(--warn)">WARNING</h4><code>P(fail ≤ 6w) ≥ 50% · 2 signals</code><p>SMS and a voice call to herders, a suggestion for another well, and a rationing plan.</p></div>
       <div><h4 style="color:var(--act)">ACT NOW</h4><code>P(fail ≤ 3w) ≥ 70% · 2 signals</code><p>Water truck routes go out, herds are moved, and pumping is rotated between wells.</p></div>
+    </div>
+    <div class="brief">
+      <h3>How SAQI meets the W-001 brief</h3>
+      <ol>
+        <li><b>The core.</b> Satellite and sensor data for six real wells (sensor readings simulated, and labelled so) → a forecast of days left with an 80% range and a confidence score → an Arabic SMS and voice call weeks before the crisis. Open any well to see all three, and “How we calculated this” for the maths.</li>
+        <li><b>Our angle.</b> A dry well is not the real crisis; finding out too late to move is. Each well says where to go instead and how far, wells with spare water can take other herds, and SAQI also warns about wells turning too salty or overused, not only running dry.</li>
+        <li><b>Desert rules.</b> Dead sensor → satellite and herder reports take over with a wider range (see Sweihan). Cloudy image → radar. Basic phones → SMS and voice. False vs. missed alarms → cheap early notices, costly actions need two signals.</li>
+        <li><b>Execution.</b> Everything runs in the browser with no paid services: the Kalman filter and 2,000-run simulation, the alert logic, and a 3D map built with Three.js that works offline. Every number on screen is computed, not typed in.</li>
+        <li><b>Demo.</b> Press “Play guided tour” for a narrated walkthrough, click any beacon to fly into that well's problem, and drag the forecast slider to see eight weeks ahead.</li>
+      </ol>
     </div>
   </div>
 </div>
