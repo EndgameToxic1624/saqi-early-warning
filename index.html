@@ -298,6 +298,44 @@ body{font-family:var(--sans);font-variant-numeric:tabular-nums;background:var(--
 #mini{width:100%;height:200px;display:block;margin-top:12px;border-radius:12px;border:1px solid var(--line);background:#fbf8f2}
 .avoid{display:flex;flex-direction:column;gap:3px;margin-top:12px;padding:11px 13px;border-radius:12px;border:1px solid color-mix(in srgb,var(--c) 35%,#fff);background:color-mix(in srgb,var(--c) 7%,#fff);font-size:13px;line-height:1.55;color:var(--text)}
 .avoid b{color:var(--c)}.avoid em{font-style:normal;font-weight:700}
+
+/* chat */
+#chatFab{position:absolute;right:18px;bottom:18px;z-index:8;display:flex;align-items:center;gap:8px;border:0;background:var(--text);color:#fff;border-radius:999px;padding:12px 18px;font:700 13px var(--sans);box-shadow:0 10px 30px rgba(23,38,46,.25);transition:.2s}
+#chatFab:hover{transform:translateY(-2px);background:#0b8a94}
+#chat{position:absolute;right:18px;bottom:18px;z-index:9;width:min(370px,calc(100% - 36px));height:min(500px,calc(100% - 140px));background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 24px 60px rgba(23,38,46,.22);display:flex;flex-direction:column;overflow:hidden;animation:pop .25s ease}
+#chat[hidden]{display:none}
+@keyframes pop{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+#chat header{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+#chat header b{display:block;font-size:14px}#chat header small{font-size:12px;color:var(--soft)}
+#chat .cav{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#12c3cf,#0a7f8c);display:grid;place-items:center;flex:none}
+#chatClose{margin-left:auto;border:0;background:var(--panel2);width:30px;height:30px;border-radius:9px;font-size:18px;color:var(--muted)}
+#chatLog{flex:1;overflow-y:auto;padding:14px 14px 4px;display:flex;flex-direction:column;gap:10px;scrollbar-width:thin}
+.msg{max-width:86%;padding:10px 13px;border-radius:14px;font-size:13.5px;line-height:1.55;white-space:pre-wrap}
+.msg.bot{background:var(--panel2);border:1px solid var(--line);border-bottom-left-radius:4px;align-self:flex-start}
+.msg.me{background:var(--teal);color:#fff;border-bottom-right-radius:4px;align-self:flex-end}
+.msg.typing{color:var(--soft)}
+.msg a.go{display:inline-block;margin-top:6px;color:var(--teal2);font-weight:700;cursor:pointer;text-decoration:underline}
+#chatChips{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;padding:8px 14px;scrollbar-width:none}#chatChips::-webkit-scrollbar{display:none}#chatChips button{flex:none;white-space:nowrap}
+#chatChips button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 11px;font:500 12px var(--sans);color:var(--teal2)}
+#chatChips button:hover{background:var(--tealBg)}
+#chatForm{display:flex;gap:8px;padding:10px 12px 12px;border-top:1px solid var(--line)}
+#chatIn{flex:1;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:14px var(--sans);outline:none}
+#chatIn:focus{border-color:var(--teal)}
+#chatForm button{border:0;background:var(--teal);color:#fff;border-radius:12px;width:42px;font-size:15px}
+/* walkthrough */
+#coach{position:fixed;inset:0;z-index:120}
+#coach[hidden]{display:none}
+#coach .spot{position:fixed;border-radius:18px;box-shadow:0 0 0 9999px rgba(23,38,46,.58);transition:all .4s cubic-bezier(.2,.8,.2,1);pointer-events:none;outline:2px solid rgba(255,255,255,.9);outline-offset:3px}
+#coach .tip{position:fixed;width:320px;background:#fff;border-radius:18px;padding:18px;box-shadow:0 24px 60px rgba(0,0,0,.25);transition:top .4s,left .4s}
+.tiph{display:flex;justify-content:space-between;align-items:center;font:600 12px var(--sans);color:var(--soft)}
+#coachSkip{border:0;background:none;color:var(--muted);font:600 12px var(--sans);text-decoration:underline}
+#coach h4{font-size:17px;margin:8px 0 6px}#coach p{font-size:13.5px;line-height:1.6;color:var(--muted)}
+.tipf{display:flex;justify-content:space-between;align-items:center;margin-top:16px}
+.dots{display:flex;gap:5px}.dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}.dots i.on{background:var(--teal);width:18px;border-radius:4px}
+.cbtn{border:0;background:var(--teal);color:#fff;border-radius:10px;padding:9px 16px;font:700 13px var(--sans);margin-left:6px}
+.cbtn.ghost{background:#fff;color:var(--muted);border:1px solid var(--line)}
+.cbtn.ghost:disabled{opacity:.35}
+.hint{display:none!important}
 </style>
 </head>
 <body>
@@ -341,6 +379,10 @@ body{font-family:var(--sans);font-variant-numeric:tabular-nums;background:var(--
   </div>
 </div>
 
+<div id="coach" hidden><div class="spot" id="coachSpot"></div><div class="tip" id="coachTip" role="dialog" aria-live="polite">
+  <div class="tiph"><span id="coachStep"></span><button id="coachSkip">Skip tour</button></div>
+  <h4 id="coachTitle"></h4><p id="coachText"></p>
+  <div class="tipf"><div class="dots" id="coachDots"></div><div><button class="cbtn ghost" id="coachBack">Back</button><button class="cbtn" id="coachNext">Next</button></div></div></div></div>
 <div class="app">
   <!-- ============ SIDEBAR ============ -->
   <aside class="sidebar">
@@ -376,6 +418,7 @@ body{font-family:var(--sans);font-variant-numeric:tabular-nums;background:var(--
         <span class="tsep"></span>
         <button class="tbtn primary" id="tourBtn">▶ Play guided tour</button>
         <button class="tbtn" id="howBtn">How it works</button>
+        <button class="tbtn icon" id="helpBtn" title="Show the walkthrough again" aria-label="Show the walkthrough again">?</button>
         <span class="tsep"></span>
         <button class="tbtn icon" id="voiceToggle" title="Voice on / off" aria-label="Voice on or off">🔊</button>
         <select id="voiceSel" aria-label="Narrator voice"></select><span class="audioBadge" id="audioBadge">● Recorded voice</span>
@@ -395,6 +438,13 @@ body{font-family:var(--sans);font-variant-numeric:tabular-nums;background:var(--
     <div id="caption"><div class="avatar"><i></i><i></i><i></i></div><div style="flex:1"><div class="who">SAQI guide</div><div id="capText"></div></div><button class="capstop" id="capStop" aria-label="Stop narration" title="Stop narration">■ Stop</button></div>
     
     <div class="toast" id="toast"></div>
+    <button id="chatFab" aria-label="Ask a question"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z"/></svg><span>Ask a question</span></button>
+    <section id="chat" aria-label="Help chat" hidden>
+      <header><div class="cav"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2"><path d="M12 2.5C12 2.5 5 10 5 14.5a7 7 0 0 0 14 0C19 10 12 2.5 12 2.5Z"/></svg></div><div><b>SAQI Assistant</b><small id="chatMode">Ask about any well, or how to use the map</small></div><button id="chatClose" aria-label="Close chat">×</button></header>
+      <div id="chatLog" role="log" aria-live="polite"></div>
+      <div id="chatChips"></div>
+      <form id="chatForm"><input id="chatIn" autocomplete="off" placeholder="Type your question…" aria-label="Your question"><button aria-label="Send">➤</button></form>
+    </section>
   </main>
 
   <!-- ============ DETAILS ============ -->
@@ -522,7 +572,7 @@ $('#voiceToggle').onclick=e=>{voiceOn=!voiceOn;e.currentTarget.textContent=voice
 (function probe(){const a=new Audio();a.preload='metadata';a.oncanplaythrough=a.onloadedmetadata=()=>{$('#audioBadge').classList.add('on');$('#voiceSel').style.display='none'};a.src=AUDIO_DIR+'intro.mp3'})();
 
 function stopNarration(){if(touring)stopTour();else stopVoice()}
-function stopVoice(){speakTok++;try{speechSynthesis.cancel()}catch(e){}if(curAudio){curAudio.pause();curAudio=null}$('#caption').classList.remove('on')}
+function stopVoice(){speakTok++;try{speechSynthesis.cancel()}catch(e){}try{window.SAQI_VOICE&&window.SAQI_VOICE.stop()}catch(e){}if(curAudio){curAudio.pause();curAudio=null}$('#caption').classList.remove('on')}
 function speak(text,onDone,key){
   stopVoice();const tok=speakTok;
   const parts=(text.match(/[^.!?]+[.!?]+["']?/g)||[text]).map(s=>s.trim()).filter(Boolean);
@@ -534,11 +584,14 @@ function speak(text,onDone,key){
     const total=parts.reduce((n,p)=>n+p.length,0),cum=[];parts.reduce((n,p,i)=>(cum[i]=n+p.length,n+p.length),0);
     a.ontimeupdate=()=>{if(!a.duration)return;const c=a.currentTime/a.duration*total;const i=cum.findIndex(v=>v>=c);if(i>=0&&ct.textContent!==parts[i])ct.textContent=parts[i]};
     a.onended=finish;
-    const fallback=()=>{if(started||tok!==speakTok)return;started=true;curAudio=null;tts()};
+    const fallback=()=>{if(started||tok!==speakTok)return;started=true;curAudio=null;premium()};
     a.onerror=fallback;a.play().then(()=>{started=true}).catch(fallback);
     return;
   }
-  tts();
+  premium();
+  function premium(){const V=window.SAQI_VOICE;if(!voiceOn||!V)return tts();
+    try{V.onLine&&V.onLine(({id})=>{if(tok===speakTok&&parts[id])ct.textContent=parts[id]})}catch(e){}
+    V.speak(parts.map((text,id)=>({text,id,voice:'airy'})),{rate:.97}).then(finish).catch(e=>{if(tok!==speakTok)return;if(e&&e.code==='viewer_stopped')return finish();tts()})}
   // 2) best available browser voice, sentence by sentence with natural breathing gaps
   function tts(){
     if(!voiceOn||!('speechSynthesis' in window)){let i=0;const nx=()=>{if(tok!==speakTok)return;if(i>=parts.length)return finish();ct.textContent=parts[i];setTimeout(nx,Math.max(1600,parts[i++].length*60))};return nx()}
@@ -903,8 +956,81 @@ $('#week').oninput=e=>{week=+e.target.value;$('#wk').textContent=week;setDate();
 /* ======================= intro ======================= */
 const BOOT=['› GRACE-FO groundwater ............ linked','› Sentinel-2 / Sentinel-1 tiles .... linked','› CHIRPS rainfall · ERA5 climate .... linked','› 6 well sensors ......... 5 live · 1 OFFLINE','› herder SMS gateway ............... ready','› forecast engine .................. ready ✓'];
 (function bootLine(i=0){if(i>=BOOT.length)return;$('#boot').textContent+=BOOT[i]+'\n';setTimeout(()=>bootLine(i+1),260)})();
-function enter(tour){blip(520,.18,'triangle');$('#intro').classList.add('hide');bootT0=performance.now();if(tour)setTimeout(startTour,700)}
-function goHome(){if(touring)stopTour();stopVoice();$('#how').classList.add('hide');selected=null;renderList();emptyDetail();resetView();$('#hint').style.opacity=1;$('#intro').classList.remove('hide')}
+function enter(tour){blip(520,.18,'triangle');$('#intro').classList.add('hide');bootT0=performance.now();
+  if(store.get('saqi-walkthrough-done','')!=='1')setTimeout(()=>startCoach(tour?startTour:null),650);else if(tour)setTimeout(startTour,700)}
+
+/* ======================= FIRST-VISIT WALKTHROUGH ======================= */
+const COACH=[
+ {el:'.site-list',t:'Pick a well',p:'These are the 6 wells we watch. Red means act now, orange means warning, green means stable. Click one to zoom in.'},
+ {el:'#holo',t:'The 3D map',p:'Drag to turn it, scroll to zoom. Click any beacon to fly in and see exactly what is going wrong there.',pad:-40},
+ {el:'.toolbar',t:'Controls',p:'Play the guided tour with narration, go back Home, turn the voice on or off, zoom, and reset the view. The ? button shows this walkthrough again.'},
+ {el:'.horizon',t:'Look into the future',p:'Slide to see how every well will look up to 8 weeks from now.'},
+ {el:'.details',t:'Everything about a well',p:'Days left, danger level, a map showing where to go instead, how to fix it, and the text message herders receive.'},
+ {el:'#chatFab',t:'Ask a question',p:'Not sure about something? Ask the assistant about any well or about how the site works.'}];
+let cIdx=0,cDone=null;
+function startCoach(after){cDone=after;cIdx=0;$('#coach').hidden=false;stopVoice();showCoach()}
+function endCoach(){$('#coach').hidden=true;store.set('saqi-walkthrough-done','1');const f=cDone;cDone=null;if(f)setTimeout(f,300)}
+function showCoach(){const s=COACH[cIdx],el=document.querySelector(s.el);if(!el)return endCoach();
+  const R=el.getBoundingClientRect(),pad=s.pad||6,sp=$('#coachSpot');
+  const x=R.left-pad,y=R.top-pad,w=R.width+pad*2,hh=R.height+pad*2;Object.assign(sp.style,{left:x+'px',top:y+'px',width:w+'px',height:hh+'px'});
+  $('#coachStep').textContent=`${cIdx+1} of ${COACH.length}`;$('#coachTitle').textContent=s.t;$('#coachText').textContent=s.p;
+  $('#coachDots').innerHTML=COACH.map((_,i)=>`<i class="${i===cIdx?'on':''}"></i>`).join('');
+  $('#coachBack').disabled=cIdx===0;$('#coachNext').textContent=cIdx===COACH.length-1?'Done':'Next';
+  const tip=$('#coachTip'),tw=320,th=tip.offsetHeight||190,vw=innerWidth,vh=innerHeight;
+  let tx,ty;if(x+w+tw+24<vw){tx=x+w+16;ty=y+Math.min(30,hh/2)}else if(x-tw-16>0){tx=x-tw-16;ty=y+Math.min(30,hh/2)}else{tx=x+w/2-tw/2;ty=y+hh+16>vh-th?y-th-16:y+hh+16}
+  if(w>vw*.45&&hh>vh*.6){tx=x+w/2-tw/2;ty=y+hh-th-60}
+  tip.style.left=Math.max(12,Math.min(vw-tw-12,tx))+'px';tip.style.top=Math.max(12,Math.min(vh-th-12,ty))+'px';$('#coachNext').focus()}
+$('#coachNext').onclick=()=>{if(cIdx<COACH.length-1){cIdx++;showCoach()}else endCoach()};
+$('#coachBack').onclick=()=>{if(cIdx>0){cIdx--;showCoach()}};
+$('#coachSkip').onclick=endCoach;
+$('#helpBtn').onclick=()=>startCoach(null);
+addEventListener('resize',()=>{if(!$('#coach').hidden)showCoach()});
+addEventListener('keydown',e=>{if($('#coach').hidden)return;if(e.key==='ArrowRight')$('#coachNext').click();if(e.key==='ArrowLeft')$('#coachBack').click();if(e.key==='Escape')endCoach()});
+
+/* ======================= HELP CHAT ======================= */
+const chatHist=[];let chatBusy=false;
+const CHIPS=['Which well is most dangerous?','Where should Hameem herds go?','How do you predict this?','What if a sensor breaks?','How do I use the map?'];
+function openChat(){$('#chat').hidden=false;$('#chatFab').hidden=true;if(!chatHist.length)botSay("Hi! I'm the SAQI assistant. Ask me about any well, what's going wrong there, where herds should go, or how to use this map.");renderChips();setTimeout(()=>$('#chatIn').focus(),50)}
+$('#chatFab').onclick=openChat;$('#chatClose').onclick=()=>{$('#chat').hidden=true;$('#chatFab').hidden=false};
+function renderChips(){$('#chatChips').innerHTML=CHIPS.map(c=>`<button type="button">${c}</button>`).join('');$('#chatChips').querySelectorAll('button').forEach(b=>b.onclick=()=>ask(b.textContent))}
+function addMsg(cls,text){const d=document.createElement('div');d.className='msg '+cls;d.textContent=text;$('#chatLog').appendChild(d);$('#chatLog').scrollTop=1e9;return d}
+function botSay(text,site){const d=addMsg('bot',text);chatHist.push({role:'assistant',content:text});if(site){const a=document.createElement('a');a.className='go';a.textContent=`Show ${site.name} on the map`;a.onclick=()=>{if(touring)stopTour();select(site,false)};d.appendChild(document.createElement('br'));d.appendChild(a)}return d}
+$('#chatForm').onsubmit=e=>{e.preventDefault();const q=$('#chatIn').value.trim();if(q)ask(q);$('#chatIn').value=''};
+async function ask(q){if(chatBusy)return;chatBusy=true;addMsg('me',q);chatHist.push({role:'user',content:q});$('#chatChips').innerHTML='';
+  const site=findSite(q);
+  if(window.SAQI_AI){const d=addMsg('bot typing','Thinking…');
+    try{const text=await window.SAQI_AI(buildPrompt(),t=>{d.classList.remove('typing');d.textContent=t;$('#chatLog').scrollTop=1e9});
+      d.classList.remove('typing');d.textContent=text;chatHist.push({role:'assistant',content:text});
+      if(site){const a=document.createElement('a');a.className='go';a.textContent=`Show ${site.name} on the map`;a.onclick=()=>select(site,false);d.appendChild(document.createElement('br'));d.appendChild(a)}}
+    catch(e){d.remove();const a=localAnswer(q);botSay(a.text,a.site)}}
+  else{const d=addMsg('bot typing','…');await new Promise(r=>setTimeout(r,450));d.remove();const a=localAnswer(q);botSay(a.text,a.site)}
+  chatBusy=false;renderChips()}
+function buildPrompt(){
+  const data=SITES.map(s=>`${s.name} (${s.area}): ${daysAt(s)} days until ${s.unit==='mS/cm'?'unsafe salinity':'dry'} (range ${s.lo}-${s.hi}, confidence ${s.conf}%), status ${LBL[statusOf(daysAt(s))]}, danger ${s.danger.score}/100 (${s.danger.lvl}). Problem: ${s.issue}. ${s.cause} Advice: ${s.danger.avoid} Fix: ${s.steps.map(x=>x[0]+' - '+x[1]).join('; ')}. ${s.people} people depend on it.`).join('\n');
+  const sys=`You are the SAQI assistant on a website that gives early warnings for desert water wells in Al Dhafra and Al Ain, Abu Dhabi. Answer the visitor's question in 2 to 5 short sentences, plainly and warmly, in the same language they write in (Arabic if they write Arabic). Only use the facts below. If asked something unrelated, say briefly that you can help with the wells and this website.
+How SAQI works: every night it combines GRACE-FO groundwater, Sentinel-2 vegetation, Sentinel-1 radar (sees through cloud), CHIRPS rainfall, ERA5 climate, well sensors and herder text reports. A Kalman filter fuses them and a survival model predicts days until failure with an 80% range. Alerts: Stable, Watch, Warning (needs 2 independent signals), Act now. Warnings go by Arabic SMS and an automated voice call to basic phones; herders reply 1 or 2. If a sensor dies, it switches to satellite and herder reports, widens the range and marks it degraded. Forecasts on this site are simulated for real places.
+How to use the site: click a well in the left list or a beacon on the 3D map to zoom in; drag to rotate, scroll to zoom; Play guided tour narrates every well; the Forecast slider looks up to 8 weeks ahead; the right panel shows days left, danger level, a map of where to go instead, how to fix it and the SMS sent; Home returns to the start page; ? replays the walkthrough.
+Current forecast (today + ${week} weeks):
+${data}`;
+  return [{role:'user',content:sys+'\n\nConversation so far:\n'+chatHist.slice(-8,-1).map(m=>(m.role==='user'?'Visitor: ':'Assistant: ')+m.content).join('\n')+'\n\nVisitor: '+chatHist[chatHist.length-1].content}]}
+const ALIAS={liwa:['hameem','liwa','hmm'],quaa:['qua','quaa',"qua'a",'qa'],mz:['madinat','zayed','mzd'],sw:['sweihan','swh'],gh:['ghayathi','ghy'],rm:['remah','rmh']};
+function findSite(q){const t=q.toLowerCase();for(const id in ALIAS)if(ALIAS[id].some(a=>t.includes(a)))return SITES.find(s=>s.id===id);return null}
+function localAnswer(q){const t=q.toLowerCase(),s=findSite(q),has=(...w)=>w.some(x=>t.includes(x));
+  const byDanger=[...SITES].sort((a,b)=>b.danger.score-a.danger.score);
+  if(s){const d=daysAt(s),go=s.danger.go&&SITES.find(x=>x.id===s.danger.go);
+    if(has('fix','solve','do ','plan','help'))return{site:s,text:`How to fix ${s.name}:\n`+s.steps.map((x,i)=>`${i+1}. ${x[0]}: ${x[1]}`).join('\n')};
+    if(has('go','avoid','instead','safe','where'))return{site:s,text:s.danger.avoid+(go?` ${go.name} is about ${kmBetween(s,go)} km away.`:'')};
+    return{site:s,text:`${s.name}: about ${Math.max(0,d)} days until ${s.unit==='mS/cm'?'the water is too salty':'it runs dry'} (likely ${s.lo}–${s.hi}). Danger ${s.danger.score}/100, ${s.danger.lvl.toLowerCase()}.\nProblem: ${s.issue}.\nWhat to do: ${s.danger.avoid}`}}
+  if(has('danger','worst','urgent','critical','risk','bad'))return{site:byDanger[0],text:'From most to least dangerous:\n'+byDanger.map((x,i)=>`${i+1}. ${x.name}: ${x.danger.score}/100, ${daysAt(x)} days left`).join('\n')};
+  if(has('safe','best','where should','go to','healthy'))return{site:SITES.find(x=>x.id==='gh'),text:'The safest wells right now are Remah (8/100) and Ghayathi (14/100). Herds from Hameem and Madinat Zayed go to Ghayathi; herds from Al Qua’a and Sweihan go to Remah.'};
+  if(has('predict','model','how does','how do you','data','satellite','work'))return{text:'Every night SAQI combines satellite groundwater (GRACE-FO), vegetation (Sentinel-2), radar that sees through cloud (Sentinel-1), rainfall (CHIRPS), climate (ERA5), well sensors and herder texts. It fuses them into one water-level estimate and predicts the days until a well fails, with a likely range and a confidence score.'};
+  if(has('sensor','broken','offline','cloud','fail'))return{site:SITES.find(x=>x.id==='sw'),text:'If a sensor goes silent, SAQI keeps going on satellite data and herder reports, widens the forecast range and marks it as degraded so nobody over-trusts it. A repair ticket is raised automatically. Sweihan is an example right now.'};
+  if(has('sms','text','message','warn','herder','phone','alert'))return{text:'Herders get a short Arabic text and an automated voice call on a basic phone, with no app or internet needed. It says how long the well has left and where to go instead. They reply 1 or 2, and those replies help the model.'};
+  if(has('false','trust','wrong','accur','sure'))return{text:'Early "Watch" notices go out easily because they cost little. A Warning or Act now alert only goes out when two independent signals agree, which keeps false alarms down without missing real problems.'};
+  if(has('use','map','click','tour','how to','navigate','start'))return{text:'Click a well in the list or a beacon on the 3D map to zoom in. Drag to rotate and scroll to zoom. "Play guided tour" narrates every well, the Forecast slider looks up to 8 weeks ahead, and the right panel shows days left, danger, where to go instead and how to fix it.'};
+  if(/[؀-ۿ]/.test(q))return{text:'أهلاً! اسألني عن أي بئر: حميم، القوع، مدينة زايد، سويحان، غياثي أو الرماح، وسأخبرك بالخطر وأين تذهب وكيف يُحل.'};
+  return{text:'I can help with any of the 6 wells (Hameem, Al Qua’a, Madinat Zayed, Sweihan, Ghayathi, Remah): how dangerous they are, where to go instead, and how to fix them. I can also explain how the predictions and warnings work.'}}
+function goHome(){$('#chat').hidden=true;$('#chatFab').hidden=false;if(touring)stopTour();stopVoice();$('#how').classList.add('hide');selected=null;renderList();emptyDetail();resetView();$('#hint').style.opacity=1;$('#intro').classList.remove('hide')}
 $('#homeBtn').onclick=goHome;
 $('#enterVoice').onclick=()=>enter(true);$('#enterSilent').onclick=()=>enter(false);
 addEventListener('keydown',e=>{if(e.key==='Escape'){$('#how').classList.add('hide');if(touring)stopTour()}});
