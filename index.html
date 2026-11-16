@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SAQI — Early Warnings for Desert Water Sources</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&family=Noto+Kufi+Arabic:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&family=Noto+Kufi+Arabic:wght@500;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#f4f7f9; --panel:#ffffff; --panel2:#f7fafb; --line:#e2e9ed; --line2:#cfdbe1;
@@ -90,7 +90,7 @@ button:focus-visible,select:focus-visible{outline:2px solid var(--teal);outline-
 .focus-tag strong{display:block;font:700 11px var(--mono);letter-spacing:.14em;color:var(--teal2)}
 .focus-tag span{display:block;font:10px var(--mono);color:var(--soft);margin-top:3px}
 .hint{position:absolute;top:92px;left:50%;transform:translateX(-50%);font:600 10px var(--mono);letter-spacing:.14em;color:var(--soft);pointer-events:none;transition:opacity .4s;white-space:nowrap}
-.map-left-meta{position:absolute;left:20px;bottom:110px;display:flex;flex-direction:column;gap:7px;pointer-events:none}
+.map-left-meta{position:absolute;left:20px;bottom:22px;display:flex;flex-direction:column;gap:7px;pointer-events:none}
 .chip{background:rgba(255,255,255,.88);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:600 9.5px var(--mono);color:var(--muted);letter-spacing:.08em;width:max-content;backdrop-filter:blur(6px)}
 .map-buttons{position:absolute;right:20px;bottom:24px;display:flex;flex-direction:column;gap:7px}
 .map-buttons button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:#fff;font:600 18px var(--mono);color:var(--text);box-shadow:var(--shadow);transition:.2s}
@@ -100,7 +100,7 @@ button:focus-visible,select:focus-visible{outline:2px solid var(--teal);outline-
 #timeline b{color:var(--teal2)}
 #timeline input{width:100%;accent-color:var(--teal);margin:6px 0 2px}
 #timeline .ticks{display:flex;justify-content:space-between;font:9px var(--mono);color:var(--soft)}
-#caption{position:absolute;left:50%;bottom:104px;transform:translate(-50%,10px);width:min(640px,86%);background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:14px;padding:12px 16px;box-shadow:0 10px 30px rgba(13,31,42,.1);opacity:0;transition:.35s;pointer-events:none;display:flex;gap:12px;align-items:flex-start}
+#caption{position:absolute;left:50%;bottom:22px;transform:translate(-50%,10px);width:min(600px,62%);background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:14px;padding:12px 16px;box-shadow:0 10px 30px rgba(13,31,42,.1);opacity:0;transition:.35s;pointer-events:none;display:flex;gap:12px;align-items:flex-start}
 #caption.on{opacity:1;transform:translate(-50%,0)}
 #caption .avatar{flex:none;width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#12c3cf,#0a7f8c);display:flex;align-items:center;justify-content:center;gap:2px}
 #caption .avatar i{width:3px;height:12px;background:#fff;border-radius:2px;animation:eq .5s infinite alternate}
@@ -194,9 +194,98 @@ button:focus-visible,select:focus-visible{outline:2px solid var(--teal);outline-
 .ladder p{font-size:11.5px;color:var(--muted);line-height:1.5}
 .close{position:sticky;top:0;float:right;border:1px solid var(--line);background:#fff;border-radius:10px;width:36px;height:36px;font-size:18px}
 
+
+/* top toolbar on the hologram */
+.topbar{position:absolute;top:16px;left:20px;right:20px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;z-index:6;pointer-events:none}
+.topbar>*{pointer-events:auto}
+.topbar h1{font-size:clamp(17px,1.8vw,24px);font-weight:800;letter-spacing:-.03em;margin-top:3px}
+.topbar h1 span{color:var(--teal)}
+.toolbar{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.95);border:1px solid var(--line);border-radius:14px;padding:5px;box-shadow:var(--shadow);backdrop-filter:blur(8px);flex-wrap:wrap;justify-content:flex-end}
+.tbtn{border:1px solid transparent;background:transparent;border-radius:9px;padding:8px 11px;font:700 10.5px var(--mono);letter-spacing:.06em;color:var(--text);transition:.2s;white-space:nowrap}
+.tbtn:hover{background:var(--tealBg);color:var(--teal2)}
+.tbtn.primary{background:var(--teal);color:#fff;padding:8px 14px}
+.tbtn.primary:hover{background:var(--teal2);color:#fff}
+.tbtn.icon{width:34px;padding:7px 0;font-size:15px}
+.tbtn.off{opacity:.4}
+.tsep{width:1px;height:22px;background:var(--line);margin:0 2px}
+.toolbar select{border:1px solid var(--line);border-radius:9px;padding:7px 8px;font:11px var(--sans);max-width:180px;background:#fff;color:var(--text)}
+.subbar{position:absolute;top:80px;left:20px;right:20px;display:flex;justify-content:space-between;align-items:center;gap:10px;z-index:5;pointer-events:none}
+.subbar>*{pointer-events:auto}
+.horizon{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.95);border:1px solid var(--line);border-radius:12px;padding:7px 12px;box-shadow:var(--shadow);font:700 9.5px var(--mono);color:var(--muted);letter-spacing:.06em}
+.horizon input{width:160px;accent-color:var(--teal)}
+.horizon b{color:var(--teal2)}
+.hint{top:132px}.focus-tag{top:126px}
+.audioBadge{font:700 9px var(--mono);color:var(--ok);letter-spacing:.1em;padding:0 6px;display:none}
+.audioBadge.on{display:inline}
 @media(max-width:1180px){.app{grid-template-columns:260px minmax(320px,1fr) 340px}}
 @media(max-width:900px){body{overflow:auto}.app{display:flex;flex-direction:column;height:auto}.main{height:72vh;order:-1}.sidebar,.details{overflow:visible}.pipe,.grid3,.ladder{grid-template-columns:1fr 1fr}}
 @media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+
+/* ===== refined design layer ===== */
+:root{--sans:'Public Sans',system-ui,sans-serif;--mono:'Public Sans',system-ui,sans-serif;--bg:#edf2f4;--line:#e3eaee;--text:#17262e;--muted:#5b6f79;--soft:#8a9ca5;--teal:#0b8a94;--teal2:#086f78;--tealBg:#e7f4f5}
+body{font-family:var(--sans);font-variant-numeric:tabular-nums;background:var(--bg)}
+.app{gap:12px;padding:12px;background:var(--bg)}
+.sidebar,.details{border:1px solid var(--line);border-radius:20px;box-shadow:0 1px 2px rgba(23,38,46,.04)}
+.main{border:1px solid var(--line);border-radius:24px;background:radial-gradient(ellipse at 50% 60%,#ffffff 0%,#f6fafb 55%,#eef4f6 100%);box-shadow:0 1px 2px rgba(23,38,46,.04),0 12px 40px rgba(23,38,46,.06)}
+.main::before,.scanline{display:none}
+.section-label,.overline,.btitle,.eyebrow,.metric span,.tag,.tbtn,.btn,.liveflag,.chip,.horizon,.count,.subtle,.who,.legend,.site small,.site .days small,.sig,.fine,.footer,.next,.sms .hdr,.focus-tag strong{letter-spacing:0;text-transform:none}
+.section-label,.btitle{font:700 13px var(--sans);color:var(--text)}
+.btitle strong{font:500 12px var(--sans);color:var(--soft)}
+.overline{font:500 12px var(--sans);color:var(--soft)}
+.brand{padding:22px 22px 18px}.brand p{font-size:13px;line-height:1.55}
+.brandmark b{font-size:19px;letter-spacing:.02em}.brandmark small{font:500 11px var(--sans);letter-spacing:0;color:var(--soft)}
+.count{font:600 11px var(--sans);background:var(--panel2);color:var(--muted);border:1px solid var(--line)}
+.subtle{font:13px/1.5 var(--sans);color:var(--muted)}
+.site-list{gap:2px;padding:4px 10px 12px}
+.site{border:1px solid transparent;border-radius:12px;padding:11px 12px;background:transparent}
+.site:hover{background:var(--panel2);transform:none;box-shadow:none;border-color:transparent}
+.site.active{background:var(--tealBg);border-color:transparent;box-shadow:inset 3px 0 0 var(--teal)}
+.site strong{font-size:14px;font-weight:600}.site small{font:12px var(--sans);color:var(--soft)}
+.site .days{font:700 16px var(--sans)}.site .days small{font:500 11px var(--sans);color:var(--soft)}
+.sidebar-bottom{background:#fff}
+.metric-grid{gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.metric{border:0;border-radius:0;padding:12px 14px;background:#fff}
+.metric:nth-child(odd){border-right:1px solid var(--line)}.metric:nth-child(-n+2){border-bottom:1px solid var(--line)}
+.metric strong{font:800 24px var(--sans)}.metric span{font:500 12px var(--sans);color:var(--muted)}
+.topbar{top:18px;left:22px;right:18px}
+.topbar h1{font:800 22px/1.15 var(--sans);letter-spacing:-.02em;margin:0}
+.topbar .lede{font:500 13px var(--sans);color:var(--muted);margin-top:4px}
+.toolbar{border-radius:14px;padding:5px;gap:4px;box-shadow:0 1px 2px rgba(23,38,46,.05),0 6px 20px rgba(23,38,46,.06)}
+.tbtn{font:600 13px var(--sans);padding:8px 12px;border-radius:10px}
+.tbtn.primary{padding:8px 16px}
+.subbar{top:84px;left:22px;right:18px}
+.horizon,.liveflag{font:500 12px var(--sans);color:var(--muted);border-radius:12px;box-shadow:0 1px 2px rgba(23,38,46,.05)}
+.horizon b{font-weight:700;color:var(--text)}
+.hint{font:500 12px var(--sans);color:var(--soft);top:134px}
+.chip{font:500 12px var(--sans);border-radius:10px}
+#caption{border-radius:16px}#caption .who{font:700 11px var(--sans);color:var(--teal2)}#capText{font-size:14.5px}
+.top-control{padding:24px 24px 16px;border-bottom:0}
+.top-control h2{font-size:26px;margin:4px 0 2px}
+.top-control .sub{font:13px var(--sans);color:var(--soft)}
+.eyebrow{font:600 12px var(--sans);color:var(--soft)}
+.tag{font:600 12px var(--sans);padding:5px 11px}
+.detail-scroll{padding:0 16px 16px}
+.block{border:1px solid var(--line);border-radius:16px;padding:16px 16px;margin-top:10px}
+.block:last-child{border-bottom:1px solid var(--line)}
+.bigval strong{font:800 52px/0.9 var(--sans);letter-spacing:-.04em}.bigval strong small{font:500 15px var(--sans);color:var(--muted)}
+.bigval .range{font:500 12px/1.5 var(--sans)}
+.legend{font:12px var(--sans)}
+.issue{border-radius:0 12px 12px 0}.issue h3{font-size:15px}.issue p{font-size:13px}
+.next{font:13px/1.55 var(--sans);border-radius:12px}
+.sig{font:13px var(--sans);padding:9px 0}.sig .v{font-weight:700}
+.steps li{font-size:13px}.steps strong{font-size:13.5px}
+.steps .n{font:700 12px var(--sans);border-radius:50%}
+.sms .hdr{font:600 12px var(--sans)}.bubble.en{font:12.5px/1.6 var(--sans)}
+.btn{font:700 13px var(--sans);padding:12px 14px;border-radius:12px}
+.fine{font:12px/1.5 var(--sans)}
+.footer{font:12px var(--sans)}
+.focus-tag{display:none}
+.boot{font-family:'JetBrains Mono',ui-monospace,monospace}
+.card h1{letter-spacing:-.01em}
+.loading-overlay{font:600 13px var(--sans);letter-spacing:0}
+.toolbar{flex-wrap:nowrap}.toolbar select{max-width:150px}.toolbar select:empty{display:none}
+.hint{letter-spacing:0;top:126px}.subbar{top:76px}
+.topbar{align-items:center}
 </style>
 </head>
 <body>
@@ -209,7 +298,7 @@ button:focus-visible,select:focus-visible{outline:2px solid var(--teal);outline-
     <div class="arsub ar">ساقي · الإنذار المبكر لمصادر المياه</div>
     <p>An AI early-warning system that tells herders, village councils and water authorities a desert well is failing <b style="color:var(--text)">weeks before it runs dry</b>.</p>
     <div class="boot" id="boot"></div>
-    <div class="btnrow"><button class="btn" id="enterVoice">▶ START VOICE BRIEFING</button><button class="btn ghost" id="enterSilent">EXPLORE</button></div>
+    <div class="btnrow"><button class="btn" id="enterVoice">Start guided tour</button><button class="btn ghost" id="enterSilent">Explore the map</button></div>
   </div>
 </div>
 
@@ -246,28 +335,22 @@ button:focus-visible,select:focus-visible{outline:2px solid var(--teal);outline-
     <div class="brand">
       <div class="brandmark"><div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M12 2.5C12 2.5 5 10 5 14.5a7 7 0 0 0 14 0C19 10 12 2.5 12 2.5Z"/></svg></div><div><b>SA<span>QI</span></b><small>DESERT WATER EARLY WARNING</small></div></div>
       <p>Predicts which desert wells are failing, weeks before they run dry, and tells the people who depend on them.</p>
-      <div class="overline" style="margin-top:12px">AL DHAFRA · AL AIN / ABU DHABI, UAE</div>
+      
     </div>
     <div class="side-section">
-      <div class="row"><span class="section-label">Monitoring zones</span><span class="count" id="siteCount">06 SITES</span></div>
-      <div class="subtle">CLICK A LOCATION · THE HOLOGRAM FLIES THERE AND EXPLAINS IT</div>
+      <div class="row"><span class="section-label">Monitoring zones</span><span class="count" id="siteCount">6 wells</span></div>
+      <div class="subtle">Pick a well to zoom in and hear what is wrong.</div>
     </div>
     <div class="site-list" id="siteList"></div>
     <div class="sidebar-bottom">
-      <div class="row"><span class="section-label">Regional overview</span><span class="count" id="horizonPill">TODAY</span></div>
+      <div class="row"><span class="section-label">Across the region</span><span class="count" id="horizonPill">Today</span></div>
       <div class="metric-grid">
-        <div class="metric"><strong id="mAct" style="color:var(--act)">0</strong><span>ACT NOW</span></div>
-        <div class="metric"><strong id="mWarn" style="color:var(--warn)">0</strong><span>WARNING</span></div>
-        <div class="metric"><strong id="mOk" style="color:var(--ok)">0</strong><span>STABLE</span></div>
-        <div class="metric"><strong id="mPeople" style="color:var(--teal2)">0</strong><span>PEOPLE ALERTED</span></div>
+        <div class="metric"><strong id="mAct" style="color:var(--act)">0</strong><span>Act now</span></div>
+        <div class="metric"><strong id="mWarn" style="color:var(--warn)">0</strong><span>Warning</span></div>
+        <div class="metric"><strong id="mOk" style="color:var(--ok)">0</strong><span>Stable</span></div>
+        <div class="metric"><strong id="mPeople" style="color:var(--teal2)">0</strong><span>People alerted</span></div>
       </div>
-      <div class="voicebox">
-        <div class="row"><span class="section-label">Voice guide</span><button class="toggle on" id="voiceToggle" aria-label="Voice on/off"></button></div>
-        <select id="voiceSel" aria-label="Choose narrator voice"></select>
-        <div class="row2"><span>SPEED</span><input type="range" id="rate" min="0.8" max="1.15" step="0.05" value="0.95"><span id="rateLbl">0.95×</span></div>
-        <div class="tip" id="voiceTip">Tip: in Microsoft Edge, pick a voice marked "Natural". Those sound the most human.</div>
-      </div>
-      <div class="btnrow"><button class="btn" id="tourBtn">▶ AUTO TOUR</button><button class="btn ghost" id="howBtn">HOW IT WORKS</button></div>
+      <p class="fine" style="margin-top:12px">Data: GRACE-FO, Sentinel-1 and 2, CHIRPS, ERA5, well sensors and herder texts. Forecasts are simulated for real places.</p>
     </div>
   </aside>
 
@@ -275,28 +358,35 @@ button:focus-visible,select:focus-visible{outline:2px solid var(--teal);outline-
   <main class="main" id="main">
     <canvas id="holo" aria-label="Interactive 3D hologram of water sources in Al Dhafra and Al Ain. Click a beacon to hear about it."></canvas>
     <div class="scanline"></div>
-    <div class="map-top">
-      <div><div class="overline" style="color:var(--teal2)">3D HOLOGRAM · LIVE FORECAST GRID</div><h1>AL DHAFRA <span>WATER GRID</span></h1></div>
-      <div class="liveflag"><b></b>SIMULATED FORECAST</div>
+    <div class="topbar">
+      <div class="toolbar">
+        <button class="tbtn primary" id="tourBtn">▶ Play guided tour</button>
+        <button class="tbtn" id="howBtn">How it works</button>
+        <span class="tsep"></span>
+        <button class="tbtn icon" id="voiceToggle" title="Voice on / off" aria-label="Voice on or off">🔊</button>
+        <select id="voiceSel" aria-label="Narrator voice"></select><span class="audioBadge" id="audioBadge">● Recorded voice</span>
+        <span class="tsep"></span>
+        <button class="tbtn icon" id="zoomIn" aria-label="Zoom in">+</button>
+        <button class="tbtn icon" id="zoomOut" aria-label="Zoom out">−</button>
+        <button class="tbtn icon" id="resetBtn" aria-label="Back to full map" title="Back to full map">⌖</button>
+      </div>
+      <div class="liveflag"><b></b>Simulated data</div>
     </div>
-    <div class="hint" id="hint">◆ CLICK A BEACON · DRAG TO ROTATE · SCROLL TO ZOOM ◆</div>
+    <div class="subbar">
+      <div class="horizon"><span>Forecast</span><input type="range" id="week" min="0" max="8" step="1" value="0" aria-label="Forecast horizon in weeks"><span>Today + <b id="wk">0</b> weeks, <b id="dateLbl"></b></span></div>
+    </div>
+    <div class="hint" id="hint">Click a beacon to zoom into its problem. Drag to rotate.</div>
     <div class="focus-tag" id="focusTag"><strong id="focusTitle">SITE LOCKED</strong><span id="focusSub"></span></div>
-    <div id="caption"><div class="avatar"><i></i><i></i><i></i></div><div><div class="who">SAQI GUIDE</div><div id="capText"></div></div></div>
-    <div class="map-left-meta"><div class="chip">GEOREFERENCED SITES · STYLIZED TERRAIN</div><div class="chip" id="coordChip">23°55′ N / 54°15′ E</div></div>
-    <div class="map-buttons"><button id="zoomIn" aria-label="Zoom in">+</button><button id="zoomOut" aria-label="Zoom out">−</button><button id="resetBtn" aria-label="Reset view" style="font-size:16px">⌖</button></div>
-    <div id="timeline">
-      <div class="row"><span>FORECAST HORIZON</span><span>TODAY + <b id="wk">0</b> WEEKS · <b id="dateLbl"></b></span></div>
-      <input type="range" id="week" min="0" max="8" step="1" value="0" aria-label="Forecast horizon in weeks">
-      <div class="ticks"><span>now</span><span>+2w</span><span>+4w</span><span>+6w</span><span>+8w</span></div>
-    </div>
+    <div id="caption"><div class="avatar"><i></i><i></i><i></i></div><div><div class="who">SAQI guide</div><div id="capText"></div></div></div>
+    <div class="map-left-meta"><div class="chip" style="font-weight:700;color:var(--text)">Al Dhafra and Al Ain, Abu Dhabi</div><div class="chip" id="coordChip">23°55′ N / 54°15′ E</div></div>
     <div class="toast" id="toast"></div>
   </main>
 
   <!-- ============ DETAILS ============ -->
   <aside class="details" id="details">
-    <div class="loading-overlay"><div class="spinner"></div><div>ANALYZING WATER STRESS</div><div style="color:var(--soft);font-size:9px">FUSING SATELLITE · SENSOR · HERDER SIGNALS</div></div>
+    <div class="loading-overlay"><div class="spinner"></div><div>Reading satellite, sensor and herder data</div></div>
     <div id="detailBody"></div>
-    <div class="footer"><span>SAQI v1.0</span><span>HACKATHON W-001 PROTOTYPE</span></div>
+    <div class="footer"><span>SAQI prototype</span><span>Hackathon W-001</span></div>
   </aside>
 </div>
 
@@ -359,13 +449,21 @@ const SITES=[
   sms_en:"SAQI: Remah well recharged after rain. Open to 4 herds from Al Qua'a. Contact the council to book",
   say:"And finally, some good news. Remah got a big storm in October. Thirty-eight millimetres of rain. The wadi actually flowed, and the water level here is rising. The satellites show the land greening up, by more than twenty percent. So we use this moment. Remah takes four herds from Al Qua'a, and one community's good luck becomes another community's safety net."}
 ];
+const FX={
+ liwa:{fx:'drain',head:'Water table falling fast',stat:'−0.38 m / week',sub:'Aquifer draining · palms losing green'},
+ quaa:{fx:'crowd',head:'Too many herds, one well',stat:'11 herds / week',sub:'Up from 4 last month · grazing land bare'},
+ mz:{fx:'salt',head:'Salt water creeping in',stat:'9.8 → 12 mS/cm',sub:'Camel limit reached in ~6 weeks'},
+ sw:{fx:'sensor',head:'Sensor offline for 6 days',stat:'Satellite fallback',sub:'Range widened · repair crew sent'},
+ gh:{fx:'share',head:'Healthy, with water to spare',stat:'+6 herds capacity',sub:'Receiving herds from Hameem'},
+ rm:{fx:'rain',head:'Recharging after the storm',stat:'+38 mm rain',sub:'Water level rising 0.12 m / week'}};
+SITES.forEach(s=>Object.assign(s,FX[s.id]));
 const INTRO="Hi, and welcome to SAQI. It means the water-bearer. Right now, most desert communities only find out a well is failing when it's already dry. And by then, it's too late. SAQI warns them weeks earlier. On this map, you're looking at six real water sources, across Al Dhafra and Al Ain, in Abu Dhabi. Every night, we combine satellite data, well sensors, and reports from herders. We predict how long each source has left, and we're honest about how sure we are. Then we send a simple Arabic text, and a phone call, to the people who need to act. Go ahead, pick any location, and I'll walk you through it.";
 const OUTRO="So, that's SAQI. Satellite and sensor data, an honest prediction, and a warning that reaches a herder's basic phone, weeks before the crisis. Because the first warning shouldn't be an empty bucket.";
 
 /* ======================= helpers ======================= */
 const $=s=>document.querySelector(s);
 const COL={act:'#e5394f',warn:'#e59400',ok:'#12a26a'};
-const LBL={act:'ACT NOW',warn:'WARNING',ok:'STABLE'};
+const LBL={act:'Act now',warn:'Warning',ok:'Stable'};
 const statusOf=d=>d<21?'act':d<49?'warn':'ok';
 let week=0,selected=null,touring=false,voiceOn=true;
 const daysAt=s=>s.days-week*7;
@@ -379,51 +477,48 @@ let actx;
 function blip(f=880,d=.12,type='sine',v=.04){try{actx=actx||new(window.AudioContext||window.webkitAudioContext)();const o=actx.createOscillator(),g=actx.createGain();o.type=type;o.frequency.value=f;o.frequency.exponentialRampToValueAtTime(f*1.6,actx.currentTime+d);g.gain.setValueAtTime(v,actx.currentTime);g.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+d);o.connect(g).connect(actx.destination);o.start();o.stop(actx.currentTime+d)}catch(e){}}
 
 /* ======================= natural voice ======================= */
-let voices=[],voice=null,rate=+store.get('saqi-rate',.95),speakTok=0;
+const AUDIO_DIR='audio/';   // drop intro.mp3, liwa.mp3, quaa.mp3, mz.mp3, sw.mp3, gh.mp3, rm.mp3, outro.mp3 here
+let voices=[],voice=null,rate=.95,speakTok=0,curAudio=null;
 function scoreVoice(v){const n=v.name;let s=0;
-  if(/Natural|Neural|Online/i.test(n))s+=100;         // Edge / Windows neural voices: most human
-  if(/Premium|Enhanced|Siri/i.test(n))s+=80;           // Apple high quality
+  if(/Natural|Neural|Online/i.test(n))s+=100;if(/Premium|Enhanced|Siri/i.test(n))s+=80;
   if(/Google UK English Female|Google US English/i.test(n))s+=60;
-  if(/Samantha|Daniel|Karen|Serena|Moira|Tessa|Ava|Allison|Susan/i.test(n))s+=40;
-  if(/en-GB/i.test(v.lang))s+=6;if(/en-US/i.test(v.lang))s+=5;
-  if(/Jenny|Aria|Sonia|Libby|Ryan|Guy|Emma|Andrew|Brian|Ava/i.test(n))s+=15;
-  if(/espeak|robot|Zira|David|Mark|Hazel/i.test(n))s-=20;
-  return s}
-function loadVoices(){
-  if(!('speechSynthesis' in window)){$('#voiceTip').textContent='This browser has no speech engine. Captions will still play.';return}
-  voices=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang)).sort((a,b)=>scoreVoice(b)-scoreVoice(a));
-  if(!voices.length)return;
-  const saved=store.get('saqi-voice','');
-  voice=voices.find(v=>v.name===saved)||voices[0];
-  const sel=$('#voiceSel');sel.innerHTML='';
-  voices.forEach(v=>{const o=document.createElement('option');o.value=v.name;const star=scoreVoice(v)>=60?'★ ':'';o.textContent=`${star}${v.name.replace(/Microsoft |Google /,'')} (${v.lang})`;if(v===voice)o.selected=true;sel.appendChild(o)});
-  if(scoreVoice(voice)>=100)$('#voiceTip').textContent='Using a natural neural voice ✓';
-}
+  if(/Samantha|Daniel|Karen|Serena|Moira|Tessa|Ava|Allison|Susan|Sonia|Libby|Jenny|Aria|Emma/i.test(n))s+=40;
+  if(/en-GB/i.test(v.lang))s+=6;if(/en-US/i.test(v.lang))s+=5;if(/espeak|Zira|David|Mark|Hazel/i.test(n))s-=20;return s}
+function loadVoices(){if(!('speechSynthesis' in window))return;
+  voices=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang)).sort((a,b)=>scoreVoice(b)-scoreVoice(a));if(!voices.length)return;
+  const saved=store.get('saqi-voice','');voice=voices.find(v=>v.name===saved)||voices[0];
+  const sel=$('#voiceSel');sel.innerHTML='';voices.forEach(v=>{const o=document.createElement('option');o.value=v.name;o.textContent=(scoreVoice(v)>=60?'★ ':'')+v.name.replace(/Microsoft |Google /,'').replace(/ Online \(Natural\)/,' (Natural)')+' · '+v.lang;if(v===voice)o.selected=true;sel.appendChild(o)})}
 if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}
 $('#voiceSel').onchange=e=>{voice=voices.find(v=>v.name===e.target.value);store.set('saqi-voice',voice.name);speak("Hi, this is how I'll sound.")};
-$('#rate').value=rate;$('#rateLbl').textContent=rate.toFixed(2)+'×';
-$('#rate').oninput=e=>{rate=+e.target.value;$('#rateLbl').textContent=rate.toFixed(2)+'×';store.set('saqi-rate',rate)};
-$('#voiceToggle').onclick=e=>{voiceOn=!voiceOn;e.currentTarget.classList.toggle('on',voiceOn);if(!voiceOn)try{speechSynthesis.cancel()}catch(e){}};
+$('#voiceToggle').onclick=e=>{voiceOn=!voiceOn;e.currentTarget.textContent=voiceOn?'🔊':'🔇';e.currentTarget.classList.toggle('off',!voiceOn);if(!voiceOn){try{speechSynthesis.cancel()}catch(err){}if(curAudio)curAudio.pause()}};
+// detect recorded human voice files
+(function probe(){const a=new Audio();a.preload='metadata';a.oncanplaythrough=a.onloadedmetadata=()=>{$('#audioBadge').classList.add('on');$('#voiceSel').style.display='none'};a.src=AUDIO_DIR+'intro.mp3'})();
 
-function stopVoice(){speakTok++;try{speechSynthesis.cancel()}catch(e){}$('#caption').classList.remove('on')}
-function speak(text,onDone){
+function stopVoice(){speakTok++;try{speechSynthesis.cancel()}catch(e){}if(curAudio){curAudio.pause();curAudio=null}$('#caption').classList.remove('on')}
+function speak(text,onDone,key){
   stopVoice();const tok=speakTok;
-  // split on sentences, then gently on long clauses so pauses feel natural
   const parts=(text.match(/[^.!?]+[.!?]+["']?/g)||[text]).map(s=>s.trim()).filter(Boolean);
-  const cap=$('#caption'),ct=$('#capText');cap.classList.add('on');let i=0;
-  const useVoice=voiceOn&&'speechSynthesis' in window;
-  const next=()=>{
-    if(tok!==speakTok)return;
-    if(i>=parts.length){setTimeout(()=>{if(tok===speakTok){cap.classList.remove('on');onDone&&onDone()}},500);return}
-    const s=parts[i++];ct.textContent=s;
-    if(!useVoice){setTimeout(next,Math.max(1600,s.length*60));return}
-    const u=new SpeechSynthesisUtterance(s);if(voice)u.voice=voice;u.lang=voice?voice.lang:'en-GB';
-    u.rate=rate*(s.endsWith('?')?1.02:1)*(s.length<25?.94:1);   // slow down short punchy lines
-    u.pitch=s.endsWith('?')?1.06:1;u.volume=1;
-    let done=false;const fin=()=>{if(done)return;done=true;setTimeout(next,s.length<25?380:240)};  // breathing gap
-    u.onend=fin;u.onerror=fin;setTimeout(()=>{if(!done&&!speechSynthesis.speaking)fin()},s.length*110+5000);
-    speechSynthesis.speak(u);
-  };next();
+  const cap=$('#caption'),ct=$('#capText');cap.classList.add('on');ct.textContent=parts[0];
+  const finish=()=>{if(tok!==speakTok)return;setTimeout(()=>{if(tok===speakTok){cap.classList.remove('on');onDone&&onDone()}},450)};
+  // 1) recorded human voice, if the mp3 exists
+  if(voiceOn&&key){
+    const a=new Audio(AUDIO_DIR+key+'.mp3');curAudio=a;let started=false;
+    const total=parts.reduce((n,p)=>n+p.length,0),cum=[];parts.reduce((n,p,i)=>(cum[i]=n+p.length,n+p.length),0);
+    a.ontimeupdate=()=>{if(!a.duration)return;const c=a.currentTime/a.duration*total;const i=cum.findIndex(v=>v>=c);if(i>=0&&ct.textContent!==parts[i])ct.textContent=parts[i]};
+    a.onended=finish;
+    const fallback=()=>{if(started||tok!==speakTok)return;started=true;curAudio=null;tts()};
+    a.onerror=fallback;a.play().then(()=>{started=true}).catch(fallback);
+    return;
+  }
+  tts();
+  // 2) best available browser voice, sentence by sentence with natural breathing gaps
+  function tts(){
+    if(!voiceOn||!('speechSynthesis' in window)){let i=0;const nx=()=>{if(tok!==speakTok)return;if(i>=parts.length)return finish();ct.textContent=parts[i];setTimeout(nx,Math.max(1600,parts[i++].length*60))};return nx()}
+    let i=0;const next=()=>{if(tok!==speakTok)return;if(i>=parts.length)return finish();
+      const s=parts[i++];ct.textContent=s;const u=new SpeechSynthesisUtterance(s.replace(/\.\.\./g,','));if(voice){u.voice=voice;u.lang=voice.lang}
+      u.rate=rate*(.97+Math.random()*.06)*(s.length<28?.93:1);u.pitch=s.endsWith('?')?1.07:.98+Math.random()*.04;
+      let done=false;const fin=()=>{if(done)return;done=true;setTimeout(next,s.length<28?420:260)};
+      u.onend=fin;u.onerror=fin;setTimeout(()=>{if(!done&&!speechSynthesis.speaking)fin()},s.length*110+5000);speechSynthesis.speak(u)};next()}
 }
 
 /* ======================= sidebar ======================= */
@@ -431,7 +526,7 @@ function renderList(){
   const L=$('#siteList');L.innerHTML='';let c={act:0,warn:0,ok:0},ppl=0;
   SITES.forEach((s,i)=>{const d=daysAt(s),st=statusOf(d);c[st]++;if(st!=='ok')ppl+=s.people;
     const b=document.createElement('button');b.className='site'+(selected===s?' active':'');b.setAttribute('aria-label','Fly to '+s.name);
-    b.innerHTML=`<span class="dot ${s.sensor==='off'?'off':''}" style="--dot:${COL[st]}"></span><span><strong>${s.name}</strong><small>${s.code} · ${s.area.split(',')[0]}</small></span><span class="days" style="color:${COL[st]}">${d>0?d+'d':'DRY'}<small>${LBL[st]}</small></span>`;
+    b.innerHTML=`<span class="dot ${s.sensor==='off'?'off':''}" style="--dot:${COL[st]}"></span><span><strong>${s.name}</strong><small>${s.code} · ${s.area.split(',')[0]}</small></span><span class="days" style="color:${COL[st]}">${d>0?d+'d':'Dry'}<small>${LBL[st]}</small></span>`;
     b.onclick=()=>{if(touring)stopTour();select(s,true)};L.appendChild(b)});
   num('#mAct',c.act);num('#mWarn',c.warn);num('#mOk',c.ok);num('#mPeople',ppl);
 }
@@ -439,8 +534,8 @@ function num(sel,to){const el=$(sel),from=+el.textContent.replace(/,/g,'')||0,t0
 
 /* ======================= details ======================= */
 function emptyDetail(){
-  $('#detailBody').innerHTML=`<div class="top-control"><div class="eyebrow">◈ SITE INTELLIGENCE</div><h2>Choose a water source</h2><div class="sub">Click a beacon on the hologram or a zone on the left.</div></div>
-  <div class="detail-scroll"><div class="block"><div class="btitle">What you'll see</div><ol class="steps">
+  $('#detailBody').innerHTML=`<div class="top-control"><h2>Choose a well</h2><div class="sub">Click a beacon on the hologram or a zone on the left.</div></div>
+  <div class="detail-scroll"><div class="block"><div class="btitle">For each well you will see</div><ol class="steps">
   <li><span class="n">01</span><div><strong>Days until failure</strong>An 80% range and the model's confidence, with no false precision.</div></li>
   <li><span class="n">02</span><div><strong>The signals behind it</strong>Satellite, sensor and herder data, each marked as healthy, stale or offline.</div></li>
   <li><span class="n">03</span><div><strong>The warning that goes out</strong>An Arabic SMS to a basic phone, plus a 3-step action plan.</div></li></ol></div></div>`;
@@ -449,33 +544,33 @@ function renderDetail(s){
   const d=daysAt(s),st=statusOf(d),c=COL[st],i=SITES.indexOf(s);
   const lo=Math.max(0,s.lo-week*7),hi=Math.max(0,s.hi-week*7);
   $('#detailBody').innerHTML=`<div class="fade">
-  <div class="top-control"><div class="row"><span class="eyebrow">◈ SITE INTELLIGENCE</span><span class="overline">ZONE ${String(i+1).padStart(2,'0')} / 06</span></div>
+  <div class="top-control"><div class="row"><span class="eyebrow">Well ${i+1} of 6 · ${s.area}</span></div>
    <h2>${s.name}</h2><div class="arn ar">${s.ar}</div><div class="sub">${s.lat.toFixed(4)}° N, ${s.lon.toFixed(4)}° E · ${s.code}</div>
-   <div class="tags"><span class="tag" style="--c:${c}">${LBL[st]}</span>${s.sensor==='off'?'<span class="tag" style="--c:#8a98a2">SENSOR OFFLINE · DEGRADED</span>':''}</div></div>
+   <div class="tags"><span class="tag" style="--c:${c}">${LBL[st]}</span>${s.sensor==='off'?'<span class="tag" style="--c:#8a98a2">Sensor offline</span>':''}</div></div>
   <div class="detail-scroll">
-   <section class="block"><div class="btitle">Time until ${s.unit==='mS/cm'?'unsafe salinity':'dry'} <strong>8-WEEK FORECAST</strong></div>
-    <div class="bigval"><strong style="color:${c}">${Math.max(0,d)}<small>days</small></strong><span class="range">80% RANGE<br>${lo}–${hi} DAYS</span></div>
-    <div class="confbar"><i id="confI"></i></div><div class="legend"><span>MODEL CONFIDENCE</span><span>${s.conf}%</span></div>
-    <canvas id="chart"></canvas><div class="legend"><span>−20 WEEKS</span><span>${s.metric.toUpperCase()} (${s.unit})</span><span>+8W</span></div></section>
-   <section class="block"><div class="btitle">Detected risk <strong>RISK / ${String(i+1).padStart(2,'0')}</strong></div>
+   <section class="block"><div class="btitle">Time until ${s.unit==='mS/cm'?'unsafe salinity':'dry'} <strong>8-week forecast</strong></div>
+    <div class="bigval"><strong style="color:${c}">${Math.max(0,d)}<small>days</small></strong><span class="range">Likely range<br><b>${lo}–${hi} days</b></span></div>
+    <div class="confbar"><i id="confI"></i></div><div class="legend"><span>Model confidence</span><span>${s.conf}%</span></div>
+    <canvas id="chart"></canvas><div class="legend"><span>20 weeks ago</span><span>${s.metric} (${s.unit})</span><span>+8 weeks</span></div></section>
+   <section class="block"><div class="btitle">What is wrong</div>
     <div class="issue" style="--c:${c}"><h3>${s.issue}</h3><p>${s.cause}</p></div>
-    <div class="next"><b>⏱ NEXT ACTION</b><span>${s.next}</span></div></section>
-   <section class="block"><div class="btitle">Signals fused <strong>${s.sig.length} SOURCES</strong></div>
+    <div class="next"><b>Next step</b><span>${s.next}</span></div></section>
+   <section class="block"><div class="btitle">Evidence <strong>${s.sig.length} signals</strong></div>
     ${s.sig.map(g=>`<div class="sig"><span class="k">${g[0]}</span><span class="v ${g[2]}">${g[1]}</span></div>`).join('')}</section>
-   <section class="block"><div class="btitle">Recommended plan <strong>3 STEPS</strong></div><ol class="steps">
+   <section class="block"><div class="btitle">Plan</div><ol class="steps">
     ${s.steps.map((a,k)=>`<li><span class="n">0${k+1}</span><div><strong>${a[0]}</strong>${a[1]}</div></li>`).join('')}</ol></section>
-   <section class="block"><div class="btitle">Early-warning preview <strong>SMS · VOICE CALL</strong></div>
-    <div class="sms"><div class="hdr"><span>▣ SAQI 4040 · BASIC PHONE</span><span>14:05</span></div>
+   <section class="block"><div class="btitle">Warning sent to herders <strong>SMS and voice call</strong></div>
+    <div class="sms"><div class="hdr"><span>SAQI 4040</span><span>14:05</span></div>
      <div class="bubble ar" id="smsAr"></div><div class="bubble en" id="smsEn"></div></div>
-    <div class="btnrow"><button class="btn sendbtn" id="sendBtn">PREVIEW WARNING DELIVERY →</button></div>
-    <div class="btnrow"><button class="btn ghost" id="replay">🔊 REPLAY GUIDE</button><button class="btn ghost" id="nextS">NEXT ZONE →</button></div>
+    <div class="btnrow"><button class="btn sendbtn" id="sendBtn">Preview the warning</button></div>
+    <div class="btnrow"><button class="btn ghost" id="replay">Replay narration</button><button class="btn ghost" id="nextS">Next well</button></div>
     <p class="fine">Demo only. No real message is sent and no live wells are monitored. Forecasts are simulated for real places.</p></section>
   </div></div>`;
   requestAnimationFrame(()=>$('#confI').style.width=s.conf+'%');
   typeText($('#smsAr'),s.sms_ar,16);setTimeout(()=>typeText($('#smsEn'),s.sms_en,8),350);
   drawChart(s);
   $('#sendBtn').onclick=()=>{blip(1200,.1);toast(`✓ ${s.people.toLocaleString()} people would get this SMS and an Arabic voice call. Nothing was actually sent.`)};
-  $('#replay').onclick=()=>speak(s.say);
+  $('#replay').onclick=()=>speak(s.say,null,s.id);
   $('#nextS').onclick=()=>select(SITES[(i+1)%SITES.length],true);
 }
 function typeText(el,t,ms){let k=0;el.textContent='';const iv=setInterval(()=>{el.textContent=t.slice(0,++k);if(k>=t.length)clearInterval(iv)},ms)}
@@ -491,7 +586,7 @@ function drawChart(s){
   (function anim(t){const p=Math.min(1,(t-t0)/1000);g.clearRect(0,0,W,H);
     g.strokeStyle='#e8eef1';g.lineWidth=1;for(let k=0;k<4;k++){const y=6+k*(H-14)/3;g.beginPath();g.moveTo(0,y);g.lineTo(W,y);g.stroke()}
     g.strokeStyle=COL.act;g.setLineDash([4,4]);g.beginPath();g.moveTo(0,Y(s.thr));g.lineTo(W,Y(s.thr));g.stroke();g.setLineDash([]);
-    g.fillStyle=COL.act;g.font='600 9px "IBM Plex Mono",monospace';g.fillText(s.unit==='mS/cm'?'CAMEL LIMIT':'PUMP INTAKE',W-78,Y(s.thr)-5);
+    g.fillStyle=COL.act;g.font='600 9px "Public Sans",sans-serif';g.fillText(s.unit==='mS/cm'?'CAMEL LIMIT':'PUMP INTAKE',W-78,Y(s.thr)-5);
     g.fillStyle='rgba(13,31,42,.06)';g.fillRect(X(0),0,W-X(0),H);
     g.save();g.beginPath();g.rect(0,0,4+(W-8)*ease(p),H);g.clip();
     const gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'rgba(10,154,168,.22)');gr.addColorStop(1,'rgba(10,154,168,0)');
@@ -524,7 +619,8 @@ function computeHeat(){G.forEach(r=>r.forEach(p=>{let best=0,col=[10,154,168];SI
 
 let cam={yaw:-.32,pitch:.95,dist:36,tx:0,tz:0},fly=null;
 function flyTo(to,dur=1500){fly={from:{...cam},to:{...cam,...to},t0:performance.now(),dur}}
-function focusOn(s){flyTo({tx:toX(s.lon)*.8,tz:toZ(s.lat)*.8,dist:20,pitch:.82,yaw:cam.yaw+.25})}
+let selT=-1e9;
+function focusOn(s){flyTo({tx:toX(s.lon),tz:toZ(s.lat),dist:12.5,pitch:.74,yaw:cam.yaw+.35},1600)}
 function resetView(){flyTo({tx:0,tz:0,dist:36,pitch:.95,yaw:-.32},1300)}
 function P(x,y,z){x-=cam.tx;z-=cam.tz;const cy=Math.cos(cam.yaw),sy=Math.sin(cam.yaw);let X=x*cy-z*sy,Z=x*sy+z*cy;const cp=Math.cos(cam.pitch),sp=Math.sin(cam.pitch);const Y=y*cp+Z*sp;Z=-y*sp+Z*cp;Z+=cam.dist;const f=Math.min(W,H*1.55)*1.1/Math.max(.5,Z);return[W/2+X*f,H*.57-Y*f,Z,f]}
 
@@ -540,7 +636,7 @@ $('#zoomIn').onclick=()=>flyTo({dist:Math.max(12,cam.dist*.75)},600);
 $('#zoomOut').onclick=()=>flyTo({dist:Math.min(54,cam.dist*1.3)},600);
 $('#resetBtn').onclick=()=>{selected=null;renderList();emptyDetail();$('#focusTag').classList.remove('show');stopVoice();resetView()};
 
-const particles=Array.from({length:120},()=>({x:(Math.random()-.5)*GW,z:(Math.random()-.5)*GD,y:Math.random()*7,v:.008+Math.random()*.02}));
+const particles=Array.from({length:60},()=>({x:(Math.random()-.5)*GW,z:(Math.random()-.5)*GD,y:Math.random()*7,v:.008+Math.random()*.02}));
 let bootT0=0,scanT=9,pulses=[];
 const rgba=(c,a)=>`rgba(${c[0]},${c[1]},${c[2]},${a})`;
 const hex2=h=>{const n=parseInt(h.slice(1),16);return[n>>16,n>>8&255,n&255]};
@@ -561,23 +657,26 @@ function frame(t){
   const PP=G.map((r,j)=>r.map(p=>{const h=p.h*boot*(1-.0*j);return P(p.x,h,p.z)}));
   const reveal=Math.floor(boot*NZ*1.2);
   for(let j=0;j<NZ&&j<reveal;j++){ctx.beginPath();let za=0;for(let i=0;i<NX;i++){const q=PP[j][i];za+=q[2];i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}za/=NX;
-    const a=Math.max(.06,Math.min(.42,(62-za)/55));ctx.strokeStyle=`rgba(8,120,135,${a})`;ctx.stroke()}
-  for(let i=0;i<NX;i+=2){ctx.beginPath();for(let j=0;j<NZ&&j<reveal;j++){const q=PP[j][i];j?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}ctx.strokeStyle='rgba(8,120,135,.10)';ctx.stroke()}
+    const a=Math.max(.05,Math.min(.3,(62-za)/60));ctx.strokeStyle=`rgba(11,138,148,${a})`;ctx.stroke()}
+  for(let i=0;i<NX;i+=3){ctx.beginPath();for(let j=0;j<NZ&&j<reveal;j++){const q=PP[j][i];j?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}ctx.strokeStyle='rgba(11,138,148,.07)';ctx.stroke()}
   // --- vertex dots: sea, heat, height tint, scan band
   for(let j=0;j<NZ&&j<reveal;j++)for(let i=0;i<NX;i++){const p=G[j][i],q=PP[j][i];
     const inScan=Math.abs(p.x-sweepX)<1.1;
     if(p.sea){if((i+j)%2===0){ctx.fillStyle='rgba(60,130,230,.45)';ctx.fillRect(q[0]-1,q[1]-1,2,2)}continue}
     if(p.heat>.08){const pul=.65+.35*Math.sin(t*.004+p.x);ctx.fillStyle=rgba(p.hc,Math.min(.85,p.heat*pul));const s=1.2+p.heat*2.2;ctx.fillRect(q[0]-s/2,q[1]-s/2,s,s)}
     else if(p.h>1.1){ctx.fillStyle=`rgba(192,138,62,${Math.min(.6,(p.h-1)*.35)})`;ctx.fillRect(q[0]-1,q[1]-1,2,2)}
-    if(inScan){ctx.fillStyle='rgba(10,190,205,.75)';ctx.fillRect(q[0]-1.3,q[1]-1.3,2.6,2.6)}}
+    if(inScan&&(i+j)%2===0){ctx.fillStyle='rgba(11,138,148,.5)';ctx.fillRect(q[0]-1.3,q[1]-1.3,2.6,2.6)}}
   // --- coastline
   ctx.beginPath();COAST.forEach((c,k)=>{const q=P(toX(c[0]),0,toZ(Math.min(c[1],LAT1)));k?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])});ctx.strokeStyle='rgba(40,110,220,.75)';ctx.lineWidth=2;ctx.stroke();ctx.lineWidth=1;
   // --- place labels
-  ctx.font='600 10px "IBM Plex Mono",monospace';
+  ctx.font='600 10px "Public Sans",sans-serif';
   const lab=(txt,lon,lat,col)=>{const q=P(toX(lon),terrainH(toX(lon),toZ(lat))*boot,toZ(lat));ctx.fillStyle=col;ctx.fillText(txt,q[0],q[1])};
   lab('ARABIAN GULF',53.0,24.75,'rgba(40,110,220,.6)');lab('RUB AL KHALI · EMPTY QUARTER',52.9,22.88,'rgba(170,115,40,.65)');lab('◆ ABU DHABI',54.37,24.45,'rgba(13,31,42,.55)');lab('◆ AL AIN',55.76,24.22,'rgba(13,31,42,.55)');
   // --- particles
   particles.forEach(p=>{p.y+=p.v;if(p.y>7)p.y=0;const q=P(p.x,p.y,p.z);ctx.fillStyle=`rgba(10,154,168,${.45*(1-p.y/7)*boot})`;ctx.fillRect(q[0],q[1],1.6,1.6)});
+  // --- spotlight: fade everything except the selected site
+  if(selected){const sx=toX(selected.lon),sz=toZ(selected.lat),q=P(sx,terrainH(sx,sz)*boot,sz),k=ease(Math.min(1,(t-selT)/1000)),R=q[3]*6.5;
+    const vg=ctx.createRadialGradient(q[0],q[1]-q[3]*1.2,R*.25,q[0],q[1]-q[3]*1.2,R);vg.addColorStop(0,'rgba(244,247,249,0)');vg.addColorStop(1,`rgba(244,247,249,${.72*k})`);ctx.fillStyle=vg;ctx.fillRect(0,0,W,H)}
   // --- water-sharing arcs
   [['liwa','gh'],['quaa','rm']].forEach(([a,b],k)=>{const A=SITES.find(s=>s.id===a),B=SITES.find(s=>s.id===b),ax=toX(A.lon),az=toZ(A.lat),bx=toX(B.lon),bz=toZ(B.lat);
     const pt=u=>{const x=ax+(bx-ax)*u,z=az+(bz-az)*u;return P(x,terrainH(x,z)*boot+Math.sin(u*Math.PI)*2.6,z)};
@@ -587,7 +686,8 @@ function frame(t){
   const order=[...SITES].sort((a,b)=>P(toX(b.lon),0,toZ(b.lat))[2]-P(toX(a.lon),0,toZ(a.lat))[2]);
   order.forEach(s=>{
     const x=toX(s.lon),z=toZ(s.lat),h=terrainH(x,z)*boot,d=daysAt(s),st=statusOf(d),col=hex2(COL[st]),isSel=selected===s,isHov=hover===s;
-    const bh=(2.4+Math.max(0,Math.min(1,1-d/150))*4)*boot;
+    const A=(selected&&!isSel)?.22:1;ctx.globalAlpha=A;
+    const bh=(isSel&&t-selT>900?1.6:(2.4+Math.max(0,Math.min(1,1-d/150))*4))*boot;
     const base=P(x,h,z),top=P(x,h+bh,z),aq=P(x,AQ,z);
     // drill column down to aquifer with water level fill
     const lvl=Math.max(.05,Math.min(1,d/150)),wl=P(x,AQ+lvl*(h-AQ)*.85,z);
@@ -610,46 +710,122 @@ function frame(t){
     const fy=Math.sin(t*.0028+SITES.indexOf(s))*.3,dm=P(x,h+bh+.5+fy,z);
     ctx.save();ctx.translate(dm[0],dm[1]);ctx.rotate(t*.0016);ctx.strokeStyle=rgba(col,1);ctx.lineWidth=1.8;ctx.strokeRect(-5,-5,10,10);ctx.fillStyle=rgba(col,.2);ctx.fillRect(-5,-5,10,10);ctx.restore();
     // label pill
-    const name=s.name,sub=`${d>0?d+' DAYS':'DRY'} · ${LBL[st]}${s.sensor==='off'?' · SENSOR OFF':''}`;
-    ctx.font=`700 ${isSel?12.5:11}px Inter,system-ui,sans-serif`;const w1=ctx.measureText(name).width;ctx.font='600 9.5px "IBM Plex Mono",monospace';const w2=ctx.measureText(sub).width;
+    const name=s.name,sub=`${d>0?d+' days':'Dry'} · ${LBL[st]}${s.sensor==='off'?' · sensor off':''}`;
+    ctx.font=`700 ${isSel?12.5:11}px "Public Sans",system-ui,sans-serif`;const w1=ctx.measureText(name).width;ctx.font='600 9.5px "Public Sans",sans-serif';const w2=ctx.measureText(sub).width;
     const bw=Math.max(w1,w2)+18,lx=dm[0]+12,ly=dm[1]-24;
-    ctx.globalAlpha=boot;ctx.fillStyle=isSel||isHov?'#fff':'rgba(255,255,255,.88)';ctx.strokeStyle=isSel?rgba(col,1):'rgba(13,31,42,.1)';ctx.lineWidth=isSel?1.5:1;
+    if(!isSel||t-selT<900){ctx.globalAlpha=boot*A;ctx.fillStyle=isSel||isHov?'#fff':'rgba(255,255,255,.88)';ctx.strokeStyle=isSel?rgba(col,1):'rgba(13,31,42,.1)';ctx.lineWidth=isSel?1.5:1;
     ctx.beginPath();ctx.roundRect(lx,ly,bw,34,8);ctx.fill();ctx.stroke();
     ctx.fillStyle=rgba(col,1);ctx.fillRect(lx,ly+8,3,18);
-    ctx.fillStyle='#0d1f2a';ctx.font=`700 ${isSel?12.5:11}px Inter,system-ui,sans-serif`;ctx.fillText(name,lx+10,ly+14);
-    ctx.fillStyle=rgba(col,1);ctx.font='600 9.5px "IBM Plex Mono",monospace';ctx.fillText(sub,lx+10,ly+27);ctx.globalAlpha=1;
+    ctx.fillStyle='#0d1f2a';ctx.font=`700 ${isSel?12.5:11}px "Public Sans",system-ui,sans-serif`;ctx.fillText(name,lx+10,ly+14);
+    ctx.fillStyle=rgba(col,1);ctx.font='600 9.5px "Public Sans",sans-serif';ctx.fillText(sub,lx+10,ly+27);}ctx.globalAlpha=1;
     screenPos[s.id]={base,top,label:[lx+bw/2,ly+17]};
   });
+  if(selected)drawFx(selected,t);
   // --- selection radar pulse
   pulses=pulses.filter(p=>p.k<1);pulses.forEach(p=>{p.k+=.011;const R=p.k*15;ctx.beginPath();for(let k=0;k<=64;k++){const an=k/64*Math.PI*2,q=P(p.x+Math.cos(an)*R,.1,p.z+Math.sin(an)*R);k?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}ctx.strokeStyle=`rgba(10,154,168,${(1-p.k)*.6})`;ctx.lineWidth=2;ctx.stroke()});
   // --- compass
   ctx.save();ctx.translate(W-46,H-210);ctx.fillStyle='#fff';ctx.strokeStyle='rgba(13,31,42,.12)';ctx.beginPath();ctx.arc(0,0,20,0,7);ctx.fill();ctx.stroke();ctx.rotate(-cam.yaw);ctx.fillStyle='#e5394f';ctx.beginPath();ctx.moveTo(0,-14);ctx.lineTo(4.5,0);ctx.lineTo(-4.5,0);ctx.fill();ctx.fillStyle='#8aa0ab';ctx.beginPath();ctx.moveTo(0,14);ctx.lineTo(4.5,0);ctx.lineTo(-4.5,0);ctx.fill();ctx.restore();
-  ctx.fillStyle='#5d7380';ctx.font='700 9px "IBM Plex Mono",monospace';ctx.fillText('N',W-49,H-236);
+  ctx.fillStyle='#5d7380';ctx.font='700 9px "Public Sans",sans-serif';ctx.fillText('N',W-49,H-236);
   requestAnimationFrame(frame);
+}
+
+/* ======================= ISSUE VISUALS (shown after zoom-in) ======================= */
+function poly(pts,close){ctx.beginPath();pts.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]));if(close)ctx.closePath()}
+function circ(x,y,z,R,n=48){const a=[];for(let k=0;k<=n;k++){const an=k/n*Math.PI*2;a.push(P(x+Math.cos(an)*R,y,z+Math.sin(an)*R))}return a}
+function shaft(x,z,h,fill,fillCol){ // cut-away well shaft from ground to aquifer, with water column
+  const w=.42,L=[P(x-w,h,z),P(x-w,AQ,z)],Rr=[P(x+w,h,z),P(x+w,AQ,z)];
+  ctx.fillStyle='rgba(194,160,110,.18)';poly([L[0],Rr[0],Rr[1],L[1]],true);ctx.fill();
+  ctx.strokeStyle='rgba(13,31,42,.45)';ctx.lineWidth=1.4;poly(L);ctx.stroke();poly(Rr);ctx.stroke();
+  const wy=AQ+(h-AQ)*fill,W1=P(x-w,wy,z),W2=P(x+w,wy,z);
+  const g=ctx.createLinearGradient(0,W1[1],0,L[1][1]);g.addColorStop(0,fillCol||'rgba(40,120,230,.75)');g.addColorStop(1,'rgba(20,70,170,.85)');
+  ctx.fillStyle=g;poly([W1,W2,Rr[1],L[1]],true);ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.9)';ctx.beginPath();ctx.ellipse((W1[0]+W2[0])/2,W1[1],Math.abs(W2[0]-W1[0])/2,3,0,0,7);ctx.fill();
+  return wy}
+function arrow(q,dir,col,size=7){ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(q[0],q[1]+dir*size);ctx.lineTo(q[0]-size*.8,q[1]-dir*size*.4);ctx.lineTo(q[0]+size*.8,q[1]-dir*size*.4);ctx.closePath();ctx.fill()}
+function drawFx(s,t){
+  const k=Math.min(1,Math.max(0,(t-selT-1100)/700));if(k<=0)return;const a=ease(k);
+  const x=toX(s.lon),z=toZ(s.lat),h=terrainH(x,z),st=statusOf(daysAt(s)),c=COL[st],col=hex2(c);
+  ctx.save();ctx.globalAlpha=a;
+  // impact zone on the ground
+  ctx.fillStyle=rgba(col,.08);poly(circ(x,h+.02,z,2.4),true);ctx.fill();ctx.strokeStyle=rgba(col,.55);ctx.setLineDash([5,5]);ctx.lineWidth=1.5;poly(circ(x,h+.02,z,2.4));ctx.stroke();ctx.setLineDash([]);
+  const T=t*.001;
+  if(s.fx==='drain'){ // water level visibly dropping inside the shaft
+    const lv=.62-.42*((T*.18)%1);shaft(x,z,h,lv);
+    for(let i=0;i<3;i++){const u=(T*.6+i/3)%1,q=P(x+.95,h-.3-u*(h-AQ)*.7,z);ctx.globalAlpha=a*(1-u);arrow(q,1,c,7)}ctx.globalAlpha=a;
+    // dried-out ring
+    for(let i=0;i<26;i++){const an=i/26*Math.PI*2,q=P(x+Math.cos(an)*1.7,h+.02,z+Math.sin(an)*1.7);ctx.fillStyle='rgba(170,115,40,.7)';ctx.fillRect(q[0]-2,q[1]-1,4,2)}
+  }
+  if(s.fx==='crowd'){ // 11 herds converging on one well
+    shaft(x,z,h,.42);
+    for(let i=0;i<11;i++){const an=i/11*Math.PI*2+.3,u=(T*.12+i*.091)%1,R=5.2-u*4.4;
+      const hx=x+Math.cos(an)*R,hz=z+Math.sin(an)*R,hy=terrainH(hx,hz)+.05;
+      ctx.strokeStyle='rgba(170,115,40,.25)';poly([P(x+Math.cos(an)*5.2,hy,z+Math.sin(an)*5.2),P(x+Math.cos(an)*.8,h,z+Math.sin(an)*.8)]);ctx.stroke();
+      for(let m=0;m<4;m++){const q=P(hx+Math.cos(m*1.7)*.18,hy,hz+Math.sin(m*2.3)*.18);ctx.fillStyle='rgba(120,75,30,.9)';ctx.beginPath();ctx.arc(q[0],q[1],2.3,0,7);ctx.fill()}}
+    ctx.strokeStyle='rgba(170,115,40,.6)';ctx.setLineDash([2,4]);poly(circ(x,h+.02,z,3.6));ctx.stroke();ctx.setLineDash([]);
+  }
+  if(s.fx==='salt'){ // salty water rising from the deep layer
+    shaft(x,z,h,.55,'rgba(120,150,200,.7)');
+    for(let i=0;i<22;i++){const u=(T*.25+i/22)%1,q=P(x+Math.sin(i*2.1)*.3,AQ-1.2+u*(h-AQ+1.2)*.6,z);ctx.fillStyle=`rgba(229,148,0,${.9*(1-u*.6)})`;ctx.beginPath();ctx.arc(q[0],q[1],2.2,0,7);ctx.fill()}
+    const d1=P(x-1.6,AQ-1.2,z),d2=P(x+1.6,AQ-1.2,z);ctx.strokeStyle='rgba(229,148,0,.7)';ctx.lineWidth=3;poly([d1,d2]);ctx.stroke();ctx.fillStyle='rgba(229,148,0,.9)';ctx.font='700 9px "Public Sans",sans-serif';ctx.fillText('BRACKISH LAYER',d2[0]+6,d2[1]+3);
+  }
+  if(s.fx==='sensor'){ // dead sensor + satellite taking over
+    const g=P(x,h+.6,z),blink=Math.sin(T*6)>0;
+    ctx.fillStyle='#fff';ctx.strokeStyle=c;ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(g[0]-12,g[1]-12,24,24,5);ctx.fill();ctx.stroke();
+    if(blink){ctx.strokeStyle=COL.act;ctx.lineWidth=3;poly([[g[0]-6,g[1]-6],[g[0]+6,g[1]+6]]);ctx.stroke();poly([[g[0]+6,g[1]-6],[g[0]-6,g[1]+6]]);ctx.stroke()}
+    const sat=P(x-1.8,h+4.2,z-.6);ctx.save();ctx.translate(sat[0],sat[1]);ctx.rotate(.3);ctx.fillStyle='#0a9aa8';ctx.fillRect(-5,-4,10,8);ctx.fillStyle='rgba(40,110,220,.85)';ctx.fillRect(-21,-3,14,6);ctx.fillRect(7,-3,14,6);ctx.restore();
+    ctx.fillStyle='#0a9aa8';ctx.font='700 9px "Public Sans",sans-serif';ctx.fillText('SENTINEL-1 RADAR',sat[0]+24,sat[1]+3);
+    const ring=circ(x,h+.03,z,1.4,24);ctx.strokeStyle='rgba(10,154,168,.35)';ring.forEach((q,i)=>{if(i%3)return;poly([sat,q]);ctx.stroke()});
+    const u=(T*.5)%1;ctx.strokeStyle=`rgba(10,154,168,${1-u})`;ctx.lineWidth=2;poly(circ(x,h+.03,z,.3+u*1.6,32));ctx.stroke();
+  }
+  if(s.fx==='share'){ // capacity ring filling as herds arrive from Hameem
+    shaft(x,z,h,.86);
+    const fill=.55+.1*Math.sin(T);ctx.strokeStyle=rgba(col,.25);ctx.lineWidth=6;poly(circ(x,h+.03,z,1.9,64));ctx.stroke();
+    ctx.strokeStyle=rgba(col,.95);poly(circ(x,h+.03,z,1.9,64).slice(0,Math.round(64*fill)));ctx.stroke();ctx.lineWidth=1;
+    const L=SITES.find(q=>q.id==='liwa'),lx=toX(L.lon),lz=toZ(L.lat);
+    for(let m=0;m<6;m++){const u=(T*.15+m/6)%1,px=lx+(x-lx)*u,pz=lz+(z-lz)*u,q=P(px,terrainH(px,pz)+Math.sin(u*Math.PI)*2.6,pz);ctx.fillStyle='rgba(120,75,30,.9)';ctx.beginPath();ctx.arc(q[0],q[1],3,0,7);ctx.fill()}
+  }
+  if(s.fx==='rain'){ // storm cloud, rain, water rising
+    const lv=.5+.3*((T*.15)%1);shaft(x,z,h,lv);
+    for(let i=0;i<5;i++){const q=P(x-1.2+i*.6,h+4.4+Math.sin(i)*.25,z);ctx.fillStyle='rgba(150,170,190,.55)';ctx.beginPath();ctx.ellipse(q[0],q[1],q[3]*.75,q[3]*.42,0,0,7);ctx.fill()}
+    ctx.strokeStyle='rgba(40,110,220,.6)';ctx.lineWidth=1.4;
+    for(let i=0;i<40;i++){const rx=x-1.4+((i*37)%28)/10,rz=z-.8+((i*53)%16)/10,u=(T*1.2+i*.137)%1,yy=h+4.1-u*4.1,q1=P(rx,yy,rz),q2=P(rx,yy-.35,rz);poly([q1,q2]);ctx.stroke()}
+    for(let i=0;i<3;i++){const u=(T*.5+i/3)%1,q=P(x+.95,AQ+u*(h-AQ)*.7,z);ctx.globalAlpha=a*(1-u);arrow(q,-1,'#12a26a',7)}ctx.globalAlpha=a;
+  }
+  // ---- callout card pinned to the site
+  const anchor=P(x,h+2.2,z);let cx=anchor[0]+70,cy=anchor[1]-120;const cw=250,chh=84;
+  cx=Math.max(16,Math.min(W-cw-16,cx));cy=Math.max(150,Math.min(H-chh-130,cy));
+  ctx.strokeStyle=c;ctx.lineWidth=1.5;poly([anchor,[cx,cy+chh/2]]);ctx.stroke();ctx.fillStyle=c;ctx.beginPath();ctx.arc(anchor[0],anchor[1],4,0,7);ctx.fill();
+  ctx.shadowColor='rgba(13,31,42,.18)';ctx.shadowBlur=24;ctx.shadowOffsetY=8;ctx.fillStyle='#fff';ctx.beginPath();ctx.roundRect(cx,cy,cw,chh,12);ctx.fill();ctx.shadowColor='transparent';
+  ctx.strokeStyle=rgba(col,.5);ctx.lineWidth=1.2;ctx.stroke();ctx.fillStyle=c;ctx.beginPath();ctx.roundRect(cx,cy,5,chh,[12,0,0,12]);ctx.fill();
+  ctx.font='700 9px "Public Sans",sans-serif';ctx.fillStyle=c;ctx.fillText((st==='ok'?'Status at ':'Problem found at ')+s.name,cx+16,cy+18);
+  ctx.font='800 14px "Public Sans",system-ui,sans-serif';ctx.fillStyle='#0d1f2a';ctx.fillText(s.head,cx+16,cy+37);
+  ctx.font='700 17px "Public Sans",sans-serif';ctx.fillStyle=c;ctx.fillText(s.stat,cx+16,cy+60);
+  ctx.font='500 10px "Public Sans",sans-serif';ctx.fillStyle='#5d7380';ctx.fillText(s.sub,cx+16,cy+76);
+  ctx.restore();
 }
 
 /* ======================= selection & tour ======================= */
 function select(s,talk){
-  selected=s;blip(660,.14,'triangle');setTimeout(()=>blip(990,.1),80);
+  selected=s;selT=performance.now();blip(660,.14,'triangle');setTimeout(()=>blip(990,.1),80);
   pulses.push({x:toX(s.lon),z:toZ(s.lat),k:0});
   $('#hint').style.opacity=0;$('#focusTag').classList.remove('show');
   const det=$('#details');det.classList.add('loading');renderList();renderDetail(s);focusOn(s);
   $('#coordChip').textContent=`${fmtDeg(s.lat,'N')} / ${fmtDeg(s.lon,'E')}`;
   $('#focusTitle').textContent=`${s.code} · SITE LOCKED`;$('#focusSub').textContent=`${s.lat.toFixed(4)}° N · ${s.lon.toFixed(4)}° E`;
-  setTimeout(()=>{det.classList.remove('loading');$('#focusTag').classList.add('show');if(selected===s)drawChart(s)},1100);
-  if(talk)setTimeout(()=>{if(selected===s)speak(s.say,touring?tourNext:null)},400);
+  setTimeout(()=>{det.classList.remove('loading');if(selected===s)drawChart(s)},1100);
+  if(talk)setTimeout(()=>{if(selected===s)speak(s.say,touring?tourNext:null,s.id)},400);
 }
 let tourIdx=-1;
-function startTour(){touring=true;tourIdx=-1;$('#tourBtn').textContent='■ STOP TOUR';selected=null;renderList();emptyDetail();resetView();speak(INTRO,tourNext)}
-function tourNext(){if(!touring)return;tourIdx++;if(tourIdx>=SITES.length){touring=false;$('#tourBtn').textContent='▶ AUTO TOUR';resetView();speak(OUTRO);return}setTimeout(()=>{if(touring)select(SITES[tourIdx],true)},500)}
-function stopTour(){touring=false;stopVoice();$('#tourBtn').textContent='▶ AUTO TOUR'}
+function startTour(){touring=true;tourIdx=-1;$('#tourBtn').textContent='■ Stop tour';selected=null;renderList();emptyDetail();resetView();speak(INTRO,tourNext,'intro')}
+function tourNext(){if(!touring)return;tourIdx++;if(tourIdx>=SITES.length){touring=false;$('#tourBtn').textContent='▶ Play guided tour';resetView();speak(OUTRO,null,'outro');return}setTimeout(()=>{if(touring)select(SITES[tourIdx],true)},500)}
+function stopTour(){touring=false;stopVoice();$('#tourBtn').textContent='▶ Play guided tour'}
 $('#tourBtn').onclick=()=>touring?stopTour():startTour();
 $('#howBtn').onclick=()=>$('#how').classList.remove('hide');
 $('#closeHow').onclick=()=>$('#how').classList.add('hide');
 $('#how').onclick=e=>{if(e.target.id==='how')$('#how').classList.add('hide')};
 
 /* ======================= timeline ======================= */
-function setDate(){const d=new Date();d.setDate(d.getDate()+week*7);$('#dateLbl').textContent=d.toLocaleDateString('en-GB',{day:'numeric',month:'short'}).toUpperCase();$('#horizonPill').textContent=week?`+${week} WEEKS`:'TODAY'}
+function setDate(){const d=new Date();d.setDate(d.getDate()+week*7);$('#dateLbl').textContent=d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});$('#horizonPill').textContent=week?`+${week} weeks`:'Today'}
 $('#week').oninput=e=>{week=+e.target.value;$('#wk').textContent=week;setDate();blip(380+week*55,.05,'square',.015);computeHeat();renderList();if(selected)renderDetail(selected)};
 
 /* ======================= intro ======================= */
