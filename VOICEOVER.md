@@ -10,7 +10,7 @@ Hi, and welcome to SAQI. It means the water-bearer. Right now, most desert commu
 
 ## audio/liwa.mp3 (Hameem Well Field)
 
-Let's start with Hameem, in Liwa Oasis. This one's urgent. The water table here is dropping almost forty centimetres, every single week. And it's not just the sensor saying that. The satellites show the aquifer draining, and the date palms are losing their green. When two independent signals agree like this, we trust it. Our forecast? About nineteen days before the pumps run dry, give or take a week. So twelve hundred people have already had a text message and a phone call, in Arabic, telling them to move their herds to Ghayathi from Sunday.
+Let's start with Hameem, in Liwa Oasis. This one's urgent. The water table here is dropping more than forty centimetres, every single week. And it's not just the sensor saying that. The satellites show the aquifer draining, and the date palms are losing their green. When two independent signals agree like this, we trust it. Our forecast? About nineteen days before the pumps run dry, give or take a week. So twelve hundred people have already had a text message and a phone call, in Arabic, telling them to move their herds to Ghayathi from Sunday.
 
 ## audio/quaa.mp3 (Al Qua'a Herd Well)
 

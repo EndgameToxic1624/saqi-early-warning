@@ -337,6 +337,14 @@ body{font-family:var(--sans);font-variant-numeric:tabular-nums;background:var(--
 .cbtn.ghost:disabled{opacity:.35}
 .hint{display:none!important}
 .calc{display:flex;flex-direction:column;gap:2px}.calc div{display:grid;grid-template-columns:118px 1fr;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:12.5px;line-height:1.5}.calc div:last-child{border-bottom:0}.calc span{color:var(--soft);font-weight:600}.calc b{font-weight:600;color:var(--text)}.calc em{font-style:normal;font-weight:800}
+.metric-grid .metric:last-child{grid-column:1 / -1;border-right:0}.metric-grid .metric:nth-child(3){border-bottom:1px solid var(--line)}.metric-grid .metric:nth-child(4){border-bottom:1px solid var(--line);border-right:0}
+@media(max-width:700px){
+ .topbar{left:10px;right:10px;top:10px}.toolbar{max-width:100%;overflow-x:auto;scrollbar-width:none;justify-content:flex-start}.toolbar::-webkit-scrollbar{display:none}
+ .topbar .liveflag,.locchip{display:none}.tbtn{font-size:12px;padding:7px 9px;flex:none}.tbtn.primary{padding:7px 11px}
+ .subbar{top:62px;left:10px;right:10px}.horizon{font-size:11px;gap:6px;padding:6px 10px;max-width:100%}.horizon input{width:84px}
+ #chatFab span{display:none}#chatFab{padding:13px}#chat{right:10px;bottom:10px;width:calc(100% - 20px);height:calc(100% - 120px)}
+ #coach .tip{width:calc(100% - 24px)!important;left:12px!important}
+}
 </style>
 </head>
 <body>
@@ -402,7 +410,7 @@ body{font-family:var(--sans);font-variant-numeric:tabular-nums;background:var(--
       <div class="metric-grid">
         <div class="metric"><strong id="mAct" style="color:var(--act)">0</strong><span>Act now</span></div>
         <div class="metric"><strong id="mWarn" style="color:var(--warn)">0</strong><span>Warning</span></div>
-        <div class="metric"><strong id="mOk" style="color:var(--ok)">0</strong><span>Stable</span></div>
+        <div class="metric"><strong id="mWatch" style="color:#2f7fd1">0</strong><span>Watch</span></div><div class="metric"><strong id="mOk" style="color:var(--ok)">0</strong><span>Stable</span></div>
         <div class="metric"><strong id="mPeople" style="color:var(--teal2)">0</strong><span>People alerted</span></div>
       </div>
       <p class="fine" style="margin-top:12px">Data: GRACE-FO, Sentinel-1 and 2, CHIRPS, ERA5, well sensors and herder texts. Forecasts are simulated for real places.</p>
@@ -468,7 +476,7 @@ const SITES=[
   steps:[['Rotate pumping','Spread extraction across 3 boreholes and cut irrigation by 25% immediately.'],['Move the herds','Send 40 registered herds to Ghayathi well, which has spare capacity, from Sunday.'],['Stage backup water','Pre-book 2 water trucks for week 2 in case the forecast holds.']],
   sms_ar:'تنبيه ساقي: بئر حميم قد يجف خلال ٢-٤ أسابيع. انقلوا القطيع إلى بئر غياثي من الأحد. رد ١ للتأكيد',
   sms_en:'SAQI ALERT: Hameem well may dry in 2-4 wks. Move herd to Ghayathi well from Sunday. Reply 1 to confirm',
-  say:"Let's start with Hameem, in Liwa Oasis. This one's urgent. The water table here is dropping almost forty centimetres, every single week. And it's not just the sensor saying that. The satellites show the aquifer draining, and the date palms are losing their green. When two independent signals agree like this, we trust it. Our forecast? About nineteen days before the pumps run dry, give or take a week. So twelve hundred people have already had a text message and a phone call, in Arabic, telling them to move their herds to Ghayathi from Sunday."},
+  say:"Let's start with Hameem, in Liwa Oasis. This one's urgent. The water table here is dropping more than forty centimetres, every single week. And it's not just the sensor saying that. The satellites show the aquifer draining, and the date palms are losing their green. When two independent signals agree like this, we trust it. Our forecast? About nineteen days before the pumps run dry, give or take a week. So twelve hundred people have already had a text message and a phone call, in Arabic, telling them to move their herds to Ghayathi from Sunday."},
  {id:'quaa',code:'QUA-02',name:"Al Qua'a Herd Well",ar:'بئر القوع',area:"Al Qua'a, Al Ain region",lon:55.45,lat:23.52,
   days:44,lo:33,hi:58,conf:74,people:310,sensor:'ok',metric:'Water above pump intake',unit:'m',now:2.4,thr:0,
   sig:[['Herder reports','11 herds this week','off'],['Sentinel-2 grazing greenness','0.12 (bare)','off'],['CHIRPS rain, 90 days','0 mm','off'],['GRACE-FO groundwater','−6 cm/yr','stale'],['ERA5 temperature','+1.8 °C','stale'],['Level sensor','−0.27 m/week','stale']],
@@ -567,24 +575,28 @@ function forecast(id,kf,n=2000,horizonW=40){const g=GEN[id],r=rngFrom(g.seed*13)
     for(let w=1;w<=horizonW;w++){const L0=L;b+=gauss(r)*g.qf;L+=b+gauss(r)*g.noise*0.3;if(w<=8)paths[w].push(L);
       if(hit===Infinity&&(dir<0?L<=g.thr:L>=g.thr)){const frac=(g.thr-L0)/((L-L0)||1e-9);hit=(w-1+Math.max(0,Math.min(1,frac)))*7}}
     paths[0].push(kf.x[0]);T.push(hit)}
+  const Ts=Float64Array.from(T);
   const q=(arr,p)=>{const s=[...arr].sort((x,y)=>x-y);return s[Math.min(s.length-1,Math.floor(p*s.length))]};
   const finite=T.filter(Number.isFinite),capped=finite.length<n*0.5;
   const med=capped?Infinity:q(T,.5),p10=q(T,.1),p90=q(T,.9);
   const conf=capped?Math.round(100*T.filter(t=>!Number.isFinite(t)||t>180).length/n):Math.round(100*T.filter(t=>Math.abs(t-med)<=0.3*med).length/n);
   const P=days=>T.filter(t=>t<=days).length/n;
   const band=paths.map(p=>({lo:q(p,.1),mid:q(p,.5),hi:q(p,.9)}));
-  return{days:capped?180:Math.round(med),lo:Math.round(p10),hi:Number.isFinite(p90)?Math.round(p90):999,conf,capped,P3:P(21),P6:P(42),P8:P(56),band,
+  return{T:Ts,days:capped?180:Math.round(med),lo:Math.round(p10),hi:Number.isFinite(p90)?Math.round(p90):999,conf,capped,P3:P(21),P6:P(42),P8:P(56),band,
     level:kf.x[0],levelSd:Math.sqrt(kf.P[0][0]),slope:kf.x[1],slopeSd:Math.sqrt(kf.P[1][1])}}
 function runModel(id){const obs=simulateHistory(id),kf=kalman(id,obs),fc=forecast(id,kf);return{obs,filt:kf.filt,...fc}}
 
 
 /* run the model for every well: all forecast numbers below are computed, not typed in */
 const SIG_GROUP=n=>/sensor/i.test(n)?'sensor':/herder/i.test(n)?'herders':'satellite';
-SITES.forEach(s=>{const m=runModel(s.id);s.model=m;s.now=GEN[s.id].now;s.thr=GEN[s.id].thr;
+SITES.forEach(s=>{const m=runModel(s.id);
+  const fmt=v=>(v>0?'+':'−')+Math.abs(v).toFixed(2);s.model=m;s.now=GEN[s.id].now;s.thr=GEN[s.id].thr;
   s.days=m.days;s.lo=m.capped?180:m.lo;s.hi=m.hi;s.conf=m.conf;s.capped=m.capped;
   // independent signal groups that point to trouble (red/amber), offline sensors don't count
   const groups={};s.sig.forEach(([n,v,st])=>{const g=SIG_GROUP(n);if(/OFFLINE/i.test(v))return;if(st!=='ok')groups[g]=true});
   s.agree=Object.keys(groups).length;
+  s.sig=s.sig.map(([n,v,st])=>n==='Level sensor'&&!/OFFLINE/.test(v)?[n,fmt(m.slope)+' m/week',st]:[n,v,st]);
+  if(s.id==='liwa'){const v=Math.abs(m.slope).toFixed(2);s.issue=`Water table falling ${v} m every week`;s.stat=`−${v} m / week`}
   s.alert=m.P3>=.7&&s.agree>=2?'act':m.P6>=.5&&s.agree>=2?'warn':m.P8>=.2?'watch':'ok';
   const med=m.capped?400:m.days,pen=s.sensor==='off'?15:0;
   s.danger.score=Math.min(99,Math.round(100*(0.5*m.P8+0.4*(1-Math.exp(-Math.pow(28/med,1.5)))+0.1*(1-m.conf/100)))+pen);
@@ -599,9 +611,13 @@ const OUTRO="So, that's SAQI. Satellite and sensor data, an honest prediction, a
 
 /* ======================= helpers ======================= */
 const $=s=>document.querySelector(s);
-const COL={act:'#e5394f',warn:'#e59400',ok:'#12a26a'};
-const LBL={act:'Act now',warn:'Warning',ok:'Stable'};
+const COL={act:'#e5394f',warn:'#e59400',watch:'#2f7fd1',ok:'#12a26a'};
+const LBL={act:'Act now',warn:'Warning',watch:'Watch',ok:'Stable'};
 const statusOf=d=>d<21?'act':d<49?'warn':'ok';
+/* alert level from the model's simulated futures, looking from today + the forecast slider */
+function alertAt(s,w){const T=s.model.T,n=T.length,o=w*7;let a=0,b=0,c=0;for(let i=0;i<n;i++){const t=T[i];if(t<=o+21)a++;if(t<=o+42)b++;if(t<=o+56)c++}
+  const P3=a/n,P6=b/n,P8=c/n;return P3>=.7&&s.agree>=2?'act':P6>=.5&&s.agree>=2?'warn':P8>=.2?'watch':'ok'}
+const stOf=s=>alertAt(s,week);
 let week=0,selected=null,touring=false,voiceOn=true;
 const daysAt=s=>s.capped?180:s.days-week*7;
 const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
@@ -666,12 +682,12 @@ function speak(text,onDone,key){
 
 /* ======================= sidebar ======================= */
 function renderList(){
-  const L=$('#siteList');L.innerHTML='';let c={act:0,warn:0,ok:0},ppl=0;
-  SITES.forEach((s,i)=>{const d=daysAt(s),st=statusOf(d);c[st]++;if(st!=='ok')ppl+=s.people;
+  const L=$('#siteList');L.innerHTML='';let c={act:0,warn:0,watch:0,ok:0},ppl=0;
+  SITES.forEach((s,i)=>{const d=daysAt(s),st=stOf(s);c[st]++;if(st!=='ok')ppl+=s.people;
     const b=document.createElement('button');b.className='site'+(selected===s?' active':'');b.setAttribute('aria-label','Fly to '+s.name);
     b.innerHTML=`<span class="dot ${s.sensor==='off'?'off':''}" style="--dot:${COL[st]}"></span><span><strong>${s.name}</strong><small>${s.code} · ${s.area.split(',')[0]}</small></span><span class="days" style="color:${COL[st]}">${d>0?dLabel(s,d)+'d':'Dry'}<small>${LBL[st]}</small></span>`;
     b.onclick=()=>{if(touring)stopTour();select(s,true)};L.appendChild(b)});
-  num('#mAct',c.act);num('#mWarn',c.warn);num('#mOk',c.ok);num('#mPeople',ppl);
+  num('#mAct',c.act);num('#mWarn',c.warn);num('#mWatch',c.watch);num('#mOk',c.ok);num('#mPeople',ppl);
 }
 function num(sel,to){const el=$(sel),from=+el.textContent.replace(/,/g,'')||0,t0=performance.now();const f=t=>{const k=Math.min(1,(t-t0)/600);el.textContent=Math.round(from+(to-from)*ease(k)).toLocaleString();if(k<1)requestAnimationFrame(f)};requestAnimationFrame(f)}
 
@@ -684,7 +700,7 @@ function emptyDetail(){
   <li><span class="n">03</span><div><strong>The warning that goes out</strong>An Arabic SMS to a basic phone, plus a 3-step action plan.</div></li></ol></div></div>`;
 }
 function renderDetail(s){
-  const d=daysAt(s),st=statusOf(d),c=COL[st],i=SITES.indexOf(s);
+  const d=daysAt(s),st=stOf(s),c=COL[st],i=SITES.indexOf(s);
   const lo=Math.max(0,s.lo-week*7),hi=s.hi>=999?'280+':Math.max(0,s.hi-week*7);
   $('#detailBody').innerHTML=`<div class="fade">
   <div class="top-control"><div class="row"><span class="eyebrow">Well ${i+1} of 6 · ${s.area}</span></div>
@@ -735,7 +751,7 @@ function typeText(el,t,ms){let k=0;el.textContent='';const iv=setInterval(()=>{e
 function rnd(seed){return()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646}}
 function drawChart(s){
   const cv=$('#chart');if(!cv)return;const dpr=devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;cv.width=W*dpr;cv.height=H*dpr;const g=cv.getContext('2d');g.scale(dpr,dpr);
-  const d=daysAt(s),c=COL[statusOf(d)];
+  const d=daysAt(s),c=COL[stOf(s)];
   const hist=s.model.obs.filter(o=>o.v!==null&&o.t>=-20).map(o=>[o.t,o.v]);
   const filt=s.model.filt.filter(o=>o.t>=-20).map(o=>[o.t,o.v]);
   const fc=s.model.band.map((q,k)=>[k,q.mid,q.lo,q.hi]);
@@ -811,7 +827,7 @@ function terrainH(x,z){const lon=lonOf(x),lat=latOf(z);
   h+=.7*Math.exp(-(((lat-23.05)/.35)**2))*(.6+.4*Math.sin(x*3));       // Liwa megadunes
   return h*.9}
 const G=[];for(let j=0;j<NZ;j++){const row=[];for(let i=0;i<NX;i++){const x=(i/(NX-1)-.5)*GW,z=(j/(NZ-1)-.5)*GD,sea=isSea(lonOf(x),latOf(z));row.push({x,z,h:sea?-.2:terrainH(x,z),sea,heat:0,hc:[10,154,168]})}G.push(row)}
-function computeHeat(){G.forEach(r=>r.forEach(p=>{let best=0,col=[10,154,168];SITES.forEach(s=>{const st=statusOf(daysAt(s));if(st==='ok')return;const dx=p.x-toX(s.lon),dz=p.z-toZ(s.lat),k=Math.exp(-(dx*dx+dz*dz)/(st==='act'?9:5))*(st==='act'?1:.75);if(k>best){best=k;col=st==='act'?[229,57,79]:[229,148,0]}});p.heat=best;p.hc=col}))}
+function computeHeat(){G.forEach(r=>r.forEach(p=>{let best=0,col=[10,154,168];SITES.forEach(s=>{const st=stOf(s);if(st==='ok')return;const dx=p.x-toX(s.lon),dz=p.z-toZ(s.lat),k=Math.exp(-(dx*dx+dz*dz)/(st==='act'?9:st==='warn'?5:3.5))*(st==='act'?1:st==='warn'?.75:.5);if(k>best){best=k;col=st==='act'?[229,57,79]:st==='warn'?[229,148,0]:[47,127,209]}});p.heat=best;p.hc=col}))}
 
 let cam={yaw:-.32,pitch:.95,dist:36,tx:0,tz:0},fly=null;
 function flyTo(to,dur=1500){fly={from:{...cam},to:{...cam,...to},t0:performance.now(),dur}}
@@ -881,7 +897,7 @@ function frame(t){
   // --- beacons (far → near)
   const order=[...SITES].sort((a,b)=>P(toX(b.lon),0,toZ(b.lat))[2]-P(toX(a.lon),0,toZ(a.lat))[2]);
   order.forEach(s=>{
-    const x=toX(s.lon),z=toZ(s.lat),h=terrainH(x,z)*boot,d=daysAt(s),st=statusOf(d),col=hex2(COL[st]),isSel=selected===s,isHov=hover===s;
+    const x=toX(s.lon),z=toZ(s.lat),h=terrainH(x,z)*boot,d=daysAt(s),st=stOf(s),col=hex2(COL[st]),isSel=selected===s,isHov=hover===s;
     const A=(selected&&!isSel)?.22:1;ctx.globalAlpha=A;
     const bh=(isSel&&t-selT>900?1.6:(2.4+Math.max(0,Math.min(1,1-d/150))*4))*boot;
     const base=P(x,h,z),top=P(x,h+bh,z),aq=P(x,AQ,z);
@@ -906,7 +922,7 @@ function frame(t){
     const fy=Math.sin(t*.0028+SITES.indexOf(s))*.3,dm=P(x,h+bh+.5+fy,z);
     ctx.save();ctx.translate(dm[0],dm[1]);ctx.rotate(t*.0016);ctx.strokeStyle=rgba(col,1);ctx.lineWidth=1.8;ctx.strokeRect(-5,-5,10,10);ctx.fillStyle=rgba(col,.2);ctx.fillRect(-5,-5,10,10);ctx.restore();
     // label pill
-    const name=s.name,sub=`${d>0?d+' days':'Dry'} · ${LBL[st]}${s.sensor==='off'?' · sensor off':''}`;
+    const name=s.name,sub=`${d>0?dLabel(s,d)+' days':'Dry'} · ${LBL[st]}${s.sensor==='off'?' · sensor off':''}`;
     ctx.font=`700 ${isSel?12.5:11}px "Public Sans",system-ui,sans-serif`;const w1=ctx.measureText(name).width;ctx.font='600 9.5px "Public Sans",sans-serif';const w2=ctx.measureText(sub).width;
     const bw=Math.max(w1,w2)+18,lx=dm[0]+12,ly=dm[1]-24;
     if(!isSel||t-selT<900){ctx.globalAlpha=boot*A;ctx.fillStyle=isSel||isHov?'#fff':'rgba(255,255,255,.88)';ctx.strokeStyle=isSel?rgba(col,1):'rgba(13,31,42,.1)';ctx.lineWidth=isSel?1.5:1;
@@ -940,7 +956,7 @@ function shaft(x,z,h,fill,fillCol){ // cut-away well shaft from ground to aquife
 function arrow(q,dir,col,size=7){ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(q[0],q[1]+dir*size);ctx.lineTo(q[0]-size*.8,q[1]-dir*size*.4);ctx.lineTo(q[0]+size*.8,q[1]-dir*size*.4);ctx.closePath();ctx.fill()}
 function drawFx(s,t){
   const k=Math.min(1,Math.max(0,(t-selT-1100)/700));if(k<=0)return;const a=ease(k);
-  const x=toX(s.lon),z=toZ(s.lat),h=terrainH(x,z),st=statusOf(daysAt(s)),c=COL[st],col=hex2(c);
+  const x=toX(s.lon),z=toZ(s.lat),h=terrainH(x,z),st=stOf(s),c=COL[st],col=hex2(c);
   ctx.save();ctx.globalAlpha=a;
   // impact zone on the ground
   ctx.fillStyle=rgba(col,.08);poly(circ(x,h+.02,z,2.4),true);ctx.fill();ctx.strokeStyle=rgba(col,.55);ctx.setLineDash([5,5]);ctx.lineWidth=1.5;poly(circ(x,h+.02,z,2.4));ctx.stroke();ctx.setLineDash([]);
@@ -1078,7 +1094,7 @@ async function ask(q){if(chatBusy)return;chatBusy=true;addMsg('me',q);chatHist.p
   else{const d=addMsg('bot typing','…');await new Promise(r=>setTimeout(r,450));d.remove();const a=localAnswer(q);botSay(a.text,a.site)}
   chatBusy=false;renderChips()}
 function buildPrompt(){
-  const data=SITES.map(s=>`${s.name} (${s.area}): ${daysAt(s)>0?daysAt(s)+' days until '+(s.unit==='mS/cm'?'unsafe salinity':'dry'):'already failed by then'} (range ${s.lo}-${s.hi}, confidence ${s.conf}%), status ${LBL[statusOf(daysAt(s))]}, danger ${s.danger.score}/100 (${s.danger.lvl}). Problem: ${s.issue}. ${s.cause} Advice: ${s.danger.avoid} Fix: ${s.steps.map(x=>x[0]+' - '+x[1]).join('; ')}. ${s.people} people depend on it.`).join('\n');
+  const data=SITES.map(s=>`${s.name} (${s.area}): ${daysAt(s)>0?daysAt(s)+' days until '+(s.unit==='mS/cm'?'unsafe salinity':'dry'):'already failed by then'} (range ${s.lo}-${s.hi}, confidence ${s.conf}%), status ${LBL[stOf(s)]}, danger ${s.danger.score}/100 (${s.danger.lvl}). Problem: ${s.issue}. ${s.cause} Advice: ${s.danger.avoid} Fix: ${s.steps.map(x=>x[0]+' - '+x[1]).join('; ')}. ${s.people} people depend on it.`).join('\n');
   const sys=`You are the SAQI assistant on a website that gives early warnings for desert water wells in Al Dhafra and Al Ain, Abu Dhabi. Answer the visitor's question in 2 to 5 short sentences, plainly and warmly, in the same language they write in (Arabic if they write Arabic). Only use the facts below. If asked something unrelated, say briefly that you can help with the wells and this website.
 How SAQI works: every night it combines GRACE-FO groundwater, Sentinel-2 vegetation, Sentinel-1 radar (sees through cloud), CHIRPS rainfall, ERA5 climate, well sensors and herder text reports. A Kalman filter fuses them into a water-level estimate and trend, then 2,000 simulated futures (Monte Carlo) give the days until failure, an 80% range and a confidence score (share of futures within 30% of the median). Alerts: Stable, Watch, Warning (needs 2 independent signals), Act now. Warnings go by Arabic SMS and an automated voice call to basic phones; herders reply 1 or 2. If a sensor dies, it switches to satellite and herder reports, widens the range and marks it degraded. Forecasts on this site are simulated for real places.
 How to use the site: click a well in the left list or a beacon on the 3D map to zoom in; drag to rotate, scroll to zoom; Play guided tour narrates every well; the Forecast slider looks up to 8 weeks ahead; the right panel shows days left, danger level, a map of where to go instead, how to fix it and the SMS sent; Home returns to the start page; ? replays the walkthrough.
