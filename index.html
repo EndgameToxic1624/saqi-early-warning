@@ -336,6 +336,7 @@ body{font-family:var(--sans);font-variant-numeric:tabular-nums;background:var(--
 .cbtn.ghost{background:#fff;color:var(--muted);border:1px solid var(--line)}
 .cbtn.ghost:disabled{opacity:.35}
 .hint{display:none!important}
+.calc{display:flex;flex-direction:column;gap:2px}.calc div{display:grid;grid-template-columns:118px 1fr;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:12.5px;line-height:1.5}.calc div:last-child{border-bottom:0}.calc span{color:var(--soft);font-weight:600}.calc b{font-weight:600;color:var(--text)}.calc em{font-style:normal;font-weight:800}
 </style>
 </head>
 <body>
@@ -361,7 +362,7 @@ body{font-family:var(--sans);font-variant-numeric:tabular-nums;background:var(--
     <div class="pipe">
       <div class="pstep"><div class="n">01 · SENSE</div><h4>Pull the data</h4><p>Groundwater, vegetation, rain and climate layers from Google Earth Engine, plus well sensors and herder reports.</p><div class="chips"><span>GRACE-FO</span><span>Sentinel-2</span><span>Sentinel-1</span><span>CHIRPS</span><span>ERA5</span></div></div>
       <div class="pstep"><div class="n">02 · CLEAN</div><h4>Handle the mess</h4><p>Cloudy pixels are filled in from radar. A sensor that goes silent for 48 hours is dropped, and the confidence range widens to match.</p></div>
-      <div class="pstep"><div class="n">03 · PREDICT</div><h4>Fuse and forecast</h4><p>A Kalman filter combines the signals into one water-level estimate, then a survival model predicts the days left, with an 80% range.</p><div class="chips"><span>Kalman</span><span>LightGBM</span><span>quantiles</span></div></div>
+      <div class="pstep"><div class="n">03 · PREDICT</div><h4>Fuse and forecast</h4><p>A Kalman filter combines the signals into one water-level estimate, then 2,000 simulated futures give the days left, an 80% range and a confidence score.</p><div class="chips"><span>Kalman</span><span>LightGBM</span><span>quantiles</span></div></div>
       <div class="pstep"><div class="n">04 · DECIDE</div><h4>Pick the alert</h4><p>There are four alert levels. A Warning only goes out when two independent signals agree.</p></div>
       <div class="pstep"><div class="n">05 · WARN</div><h4>Reach people</h4><p>Arabic SMS and an automated voice call to basic phones, a WhatsApp message to councils, and a dashboard for the water authority. Herders reply 1 or 2, and their replies feed back into the model.</p></div>
     </div>
@@ -497,7 +498,7 @@ const SITES=[
   say:"Now, Sweihan. Its sensor went silent six days ago. Probably a flat battery. In the real desert, this happens all the time. So what does SAQI do? It doesn't go blind, and it doesn't panic either. It leans on satellite radar, which can see through cloud, and it asks local herders to text in what they're seeing. The forecast is still around ten weeks, but we widen the range, and we clearly mark it as lower confidence. And a repair crew is already on the way."},
  {id:'gh',code:'GHY-05',name:'Ghayathi Reserve Well',ar:'بئر غياثي',area:'Ghayathi, Al Dhafra',lon:52.80,lat:23.84,
   days:150,lo:128,hi:180,conf:86,people:420,sensor:'ok',metric:'Water above pump intake',unit:'m',now:7.9,thr:0,
-  sig:[['Level sensor','−0.05 m/week','ok'],['GRACE-FO groundwater','−1 cm/yr','ok'],['Sentinel-2 greenness','0.29 stable','ok'],['CHIRPS rain, 90 days','14 mm','ok'],['ERA5 evaporation','moderate','ok'],['Herder reports','3 × "good"','ok']],
+  sig:[['Level sensor','−0.37 m/week','ok'],['GRACE-FO groundwater','−1 cm/yr','ok'],['Sentinel-2 greenness','0.29 stable','ok'],['CHIRPS rain, 90 days','14 mm','ok'],['ERA5 evaporation','moderate','ok'],['Herder reports','3 × "good"','ok']],
   issue:'Stable, with spare capacity to share',cause:'Around five months of margin. Ghayathi becomes the destination for herds leaving Hameem.',
   next:'Host up to 6 extra herds. Re-check every week that sharing stays safe.',
   steps:[['Receive herds','Open 4-hour daily slots for each of the herds moving from Hameem.'],['Guard the margin','SAQI re-forecasts every week with the extra demand included.'],['Stay ready','If Ghayathi drops to WATCH, sharing pauses automatically.']],
@@ -530,6 +531,67 @@ const DANGER={
  gh:{score:14,lvl:'Low',go:null,avoid:'Herds leaving Hameem and Madinat Zayed are being sent here.'},
  rm:{score:8,lvl:'Very low',go:null,avoid:"Recharged by rain and open to herds from Al Qua'a and Sweihan."}};
 SITES.forEach(s=>s.danger=DANGER[s.id]);
+/* ===== SAQI forecast model: simulated observations -> Kalman filter -> Monte Carlo ===== */
+function rngFrom(seed){let s=seed>>>0||1;return()=>{s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
+function gauss(r){let u=0,v=0;while(!u)u=r();while(!v)v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+// per-well observation setup (weekly, 26 weeks ending today). Values are simulated for real places.
+const GEN={
+ liwa:{qf:0.05,now:1.22,thr:0,slope:-0.38,accel:0.007,noise:0.05,graceSd:0.12,off:0,qb:0.012,seed:11},
+ quaa:{qf:0.035,now:1.70,thr:0,slope:-0.27,accel:0.0068,noise:0.05,graceSd:0.14,off:0,qb:0.010,seed:23},
+ mz:{qf:0.045,now:9.8,thr:12,slope:0.342,accel:-0.006,noise:0.12,graceSd:0.2,off:0,qb:0.012,seed:37},
+ sw:{qf:0.075,now:3.8,thr:0,slope:-0.47,accel:0,noise:0.35,graceSd:0.25,off:1,qb:0.045,seed:41},
+ gh:{qf:0.03,now:7.9,thr:0,slope:-0.369,accel:0,noise:0.06,graceSd:0.12,off:0,qb:0.006,seed:53},
+ rm:{qf:0.02,now:6.2,thr:0,slope:0.12,accel:0,noise:0.06,graceSd:0.15,off:0,qb:0.004,seed:67,storm:-6}};
+function simulateHistory(id){const g=GEN[id],r=rngFrom(g.seed),obs=[];
+  // walk backwards from today: level(t) = now - sum of slopes
+  let L=g.now;const lv=[];for(let t=0;t>=-25;t--){lv.unshift(L);let sl=g.slope+g.accel*(t-1);
+    if(g.storm!==undefined){sl=t-1>=g.storm?g.slope:-0.05;if(t-1===g.storm-1)sl=-0.05;}L-=sl;if(g.storm!==undefined&&t===g.storm)L-=1.1}
+  for(let i=0;i<26;i++){const t=i-25,missing=g.off&&t>-g.off;obs.push({t,v:missing?null:lv[i]+gauss(r)*g.noise,truth:lv[i]})}
+  return obs}
+function kalman(id,obs){const g=GEN[id];
+  let x=[obs[0].v,0],P=[[1,0],[0,1]];const R=g.noise**2,qL=(g.noise*0.5)**2,qb=g.qb**2,filt=[];
+  for(let i=0;i<obs.length;i++){ // predict
+    if(i>0){x=[x[0]+x[1],x[1]];P=[[P[0][0]+2*P[0][1]+P[1][1]+qL,P[0][1]+P[1][1]],[P[0][1]+P[1][1],P[1][1]+qb]]}
+    const o=obs[i];
+    if(o.v!==null){const S=P[0][0]+R,K=[P[0][0]/S,P[1][0]/S],y=o.v-x[0];x=[x[0]+K[0]*y,x[1]+K[1]*y];
+      P=[[(1-K[0])*P[0][0],(1-K[0])*P[0][1]],[P[1][0]-K[1]*P[0][0],P[1][1]-K[1]*P[0][1]]]}
+    // GRACE-FO: monthly coarse trend observation of the slope
+    if(i%4===3){const r=rngFrom(g.seed*7+i),ys=(o.truth-obs[Math.max(0,i-4)].truth)/4+gauss(r)*g.graceSd*0.3,S=P[1][1]+g.graceSd**2,K=[P[0][1]/S,P[1][1]/S],y=ys-x[1];
+      x=[x[0]+K[0]*y,x[1]+K[1]*y];P=[[P[0][0]-K[0]*P[1][0],P[0][1]-K[0]*P[1][1]],[(1-K[1])*P[1][0],(1-K[1])*P[1][1]]]}
+    filt.push({t:o.t,v:x[0]})}
+  return{x,P,filt}}
+function forecast(id,kf,n=2000,horizonW=40){const g=GEN[id],r=rngFrom(g.seed*13),dir=Math.sign(g.thr-g.now)||-1;
+  const a=Math.sqrt(Math.max(1e-9,kf.P[0][0])),c=kf.P[1][0]/a,d=Math.sqrt(Math.max(1e-9,kf.P[1][1]-c*c));
+  const T=[],paths=Array.from({length:9},()=>[]);
+  for(let k=0;k<n;k++){const z1=gauss(r),z2=gauss(r);let L=kf.x[0]+a*z1,b=kf.x[1]+c*z1+d*z2,hit=Infinity;
+    for(let w=1;w<=horizonW;w++){const L0=L;b+=gauss(r)*g.qf;L+=b+gauss(r)*g.noise*0.3;if(w<=8)paths[w].push(L);
+      if(hit===Infinity&&(dir<0?L<=g.thr:L>=g.thr)){const frac=(g.thr-L0)/((L-L0)||1e-9);hit=(w-1+Math.max(0,Math.min(1,frac)))*7}}
+    paths[0].push(kf.x[0]);T.push(hit)}
+  const q=(arr,p)=>{const s=[...arr].sort((x,y)=>x-y);return s[Math.min(s.length-1,Math.floor(p*s.length))]};
+  const finite=T.filter(Number.isFinite),capped=finite.length<n*0.5;
+  const med=capped?Infinity:q(T,.5),p10=q(T,.1),p90=q(T,.9);
+  const conf=capped?Math.round(100*T.filter(t=>!Number.isFinite(t)||t>180).length/n):Math.round(100*T.filter(t=>Math.abs(t-med)<=0.3*med).length/n);
+  const P=days=>T.filter(t=>t<=days).length/n;
+  const band=paths.map(p=>({lo:q(p,.1),mid:q(p,.5),hi:q(p,.9)}));
+  return{days:capped?180:Math.round(med),lo:Math.round(p10),hi:Number.isFinite(p90)?Math.round(p90):999,conf,capped,P3:P(21),P6:P(42),P8:P(56),band,
+    level:kf.x[0],levelSd:Math.sqrt(kf.P[0][0]),slope:kf.x[1],slopeSd:Math.sqrt(kf.P[1][1])}}
+function runModel(id){const obs=simulateHistory(id),kf=kalman(id,obs),fc=forecast(id,kf);return{obs,filt:kf.filt,...fc}}
+
+
+/* run the model for every well: all forecast numbers below are computed, not typed in */
+const SIG_GROUP=n=>/sensor/i.test(n)?'sensor':/herder/i.test(n)?'herders':'satellite';
+SITES.forEach(s=>{const m=runModel(s.id);s.model=m;s.now=GEN[s.id].now;s.thr=GEN[s.id].thr;
+  s.days=m.days;s.lo=m.capped?180:m.lo;s.hi=m.hi;s.conf=m.conf;s.capped=m.capped;
+  // independent signal groups that point to trouble (red/amber), offline sensors don't count
+  const groups={};s.sig.forEach(([n,v,st])=>{const g=SIG_GROUP(n);if(/OFFLINE/i.test(v))return;if(st!=='ok')groups[g]=true});
+  s.agree=Object.keys(groups).length;
+  s.alert=m.P3>=.7&&s.agree>=2?'act':m.P6>=.5&&s.agree>=2?'warn':m.P8>=.2?'watch':'ok';
+  const med=m.capped?400:m.days,pen=s.sensor==='off'?15:0;
+  s.danger.score=Math.min(99,Math.round(100*(0.5*m.P8+0.4*(1-Math.exp(-Math.pow(28/med,1.5)))+0.1*(1-m.conf/100)))+pen);
+  s.danger.lvl=s.danger.score>=80?'Very high':s.danger.score>=55?'High':s.danger.score>=30?'Medium':s.danger.score>=10?'Low':'Very low'});
+const ALERT_LBL={act:'Act now',warn:'Warning',watch:'Watch',ok:'Stable'};
+const pct=x=>Math.round(x*100)+'%';
+function dLabel(s,d){return s.capped?'180+':String(Math.max(0,d))}
 const dColor=v=>v>=80?'#e5394f':v>=55?'#ef6c1a':v>=35?'#e59400':'#12a26a';
 function kmBetween(a,b){const R=6371,t=Math.PI/180,dLat=(b.lat-a.lat)*t,dLon=(b.lon-a.lon)*t,x=Math.sin(dLat/2)**2+Math.cos(a.lat*t)*Math.cos(b.lat*t)*Math.sin(dLon/2)**2;return Math.round(2*R*Math.asin(Math.sqrt(x)))}
 const INTRO="Hi, and welcome to SAQI. It means the water-bearer. Right now, most desert communities only find out a well is failing when it's already dry. And by then, it's too late. SAQI warns them weeks earlier. On this map, you're looking at six real water sources, across Al Dhafra and Al Ain, in Abu Dhabi. Every night, we combine satellite data, well sensors, and reports from herders. We predict how long each source has left, and we're honest about how sure we are. Then we send a simple Arabic text, and a phone call, to the people who need to act. Go ahead, pick any location, and I'll walk you through it.";
@@ -541,7 +603,7 @@ const COL={act:'#e5394f',warn:'#e59400',ok:'#12a26a'};
 const LBL={act:'Act now',warn:'Warning',ok:'Stable'};
 const statusOf=d=>d<21?'act':d<49?'warn':'ok';
 let week=0,selected=null,touring=false,voiceOn=true;
-const daysAt=s=>s.days-week*7;
+const daysAt=s=>s.capped?180:s.days-week*7;
 const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
 const store={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('show'),3200)}
@@ -607,7 +669,7 @@ function renderList(){
   const L=$('#siteList');L.innerHTML='';let c={act:0,warn:0,ok:0},ppl=0;
   SITES.forEach((s,i)=>{const d=daysAt(s),st=statusOf(d);c[st]++;if(st!=='ok')ppl+=s.people;
     const b=document.createElement('button');b.className='site'+(selected===s?' active':'');b.setAttribute('aria-label','Fly to '+s.name);
-    b.innerHTML=`<span class="dot ${s.sensor==='off'?'off':''}" style="--dot:${COL[st]}"></span><span><strong>${s.name}</strong><small>${s.code} · ${s.area.split(',')[0]}</small></span><span class="days" style="color:${COL[st]}">${d>0?d+'d':'Dry'}<small>${LBL[st]}</small></span>`;
+    b.innerHTML=`<span class="dot ${s.sensor==='off'?'off':''}" style="--dot:${COL[st]}"></span><span><strong>${s.name}</strong><small>${s.code} · ${s.area.split(',')[0]}</small></span><span class="days" style="color:${COL[st]}">${d>0?dLabel(s,d)+'d':'Dry'}<small>${LBL[st]}</small></span>`;
     b.onclick=()=>{if(touring)stopTour();select(s,true)};L.appendChild(b)});
   num('#mAct',c.act);num('#mWarn',c.warn);num('#mOk',c.ok);num('#mPeople',ppl);
 }
@@ -623,20 +685,29 @@ function emptyDetail(){
 }
 function renderDetail(s){
   const d=daysAt(s),st=statusOf(d),c=COL[st],i=SITES.indexOf(s);
-  const lo=Math.max(0,s.lo-week*7),hi=Math.max(0,s.hi-week*7);
+  const lo=Math.max(0,s.lo-week*7),hi=s.hi>=999?'280+':Math.max(0,s.hi-week*7);
   $('#detailBody').innerHTML=`<div class="fade">
   <div class="top-control"><div class="row"><span class="eyebrow">Well ${i+1} of 6 · ${s.area}</span></div>
    <h2>${s.name}</h2><div class="arn ar">${s.ar}</div><div class="sub">${s.lat.toFixed(4)}° N, ${s.lon.toFixed(4)}° E · ${s.code}</div>
    <div class="tags"><span class="tag" style="--c:${c}">${LBL[st]}</span>${s.sensor==='off'?'<span class="tag" style="--c:#8a98a2">Sensor offline</span>':''}</div></div>
   <div class="detail-scroll">
    <section class="block"><div class="btitle">Time until ${s.unit==='mS/cm'?'unsafe salinity':'dry'} <strong>8-week forecast</strong></div>
-    <div class="bigval"><strong style="color:${c}">${Math.max(0,d)}<small>days</small></strong><span class="range">Likely range<br><b>${lo}–${hi} days</b></span></div>
+    <div class="bigval"><strong style="color:${c}">${dLabel(s,d)}<small>days</small></strong><span class="range">${s.capped?'Level is rising<br><b>No failure in 6 months</b>':`Likely range (80%)<br><b>${lo}–${hi} days</b>`}</span></div>
     <div class="confbar"><i id="confI"></i></div><div class="legend"><span>Model confidence</span><span>${s.conf}%</span></div>
     <canvas id="chart"></canvas><div class="legend"><span>20 weeks ago</span><span>${s.metric} (${s.unit})</span><span>+8 weeks</span></div></section>
    <section class="block"><div class="btitle">Danger level <strong style="color:${dColor(s.danger.score)};font-weight:700">${s.danger.lvl}</strong></div>
     <div class="dgauge"><i style="left:${s.danger.score}%"></i></div><div class="legend"><span>Safe</span><span><b style="color:${dColor(s.danger.score)}">${s.danger.score}</b> / 100</span><span>Critical</span></div>
     <canvas id="mini"></canvas>
     <div class="avoid" style="--c:${s.danger.go?dColor(s.danger.score):'#12a26a'}"><b>${s.danger.go?'Avoid or go instead':'Safe to use'}</b><span>${s.danger.avoid}${s.danger.go?` <em>${SITES.find(q=>q.id===s.danger.go).name}, ${kmBetween(s,SITES.find(q=>q.id===s.danger.go))} km away.</em>`:''}</span></div></section>
+   <section class="block"><div class="btitle">How we calculated this <strong>runs live in your browser</strong></div>
+    <div class="calc">
+     <div><span>1. Read the data</span><b>${s.model.obs.filter(o=>o.v!==null).length} weekly ${s.unit==='mS/cm'?'salinity':'water-level'} readings + monthly GRACE-FO trend${s.sensor==='off'?' (sensor silent this week, so satellite and herder reports only)':''}</b></div>
+     <div><span>2. Kalman filter</span><b>Now ${s.model.level.toFixed(2)} ± ${s.model.levelSd.toFixed(2)} ${s.unit}, changing ${s.model.slope>0?'+':''}${s.model.slope.toFixed(2)} ± ${s.model.slopeSd.toFixed(2)} ${s.unit} a week</b></div>
+     <div><span>3. 2,000 simulated futures</span><b>${s.capped?'Most futures never reach the limit within 6 months':`Median ${s.model.days} days · 80% between ${s.model.lo} and ${s.model.hi>=999?'280+':s.model.hi}`} · confidence ${s.conf}%</b></div>
+     <div><span>4. Chance of failing</span><b>within 3 weeks ${pct(s.model.P3)} · 6 weeks ${pct(s.model.P6)} · 8 weeks ${pct(s.model.P8)}</b></div>
+     <div><span>5. Signals agreeing</span><b>${s.agree} of 3 (sensor, satellite, herders) → <em style="color:${s.alert==='act'?'#e5394f':s.alert==='warn'?'#e59400':s.alert==='watch'?'#0b8a94':'#12a26a'}">${ALERT_LBL[s.alert]}</em></b></div>
+    </div>
+    <p class="fine" style="margin-top:8px">Confidence is the share of simulated futures that land within 30% of the median. A Warning or Act now alert needs two independent signals to agree.</p></section>
    <section class="block"><div class="btitle">What is wrong</div>
     <div class="issue" style="--c:${c}"><h3>${s.issue}</h3><p>${s.cause}</p></div>
     <div class="next"><b>Next step</b><span>${s.next}</span></div></section>
@@ -664,9 +735,10 @@ function typeText(el,t,ms){let k=0;el.textContent='';const iv=setInterval(()=>{e
 function rnd(seed){return()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646}}
 function drawChart(s){
   const cv=$('#chart');if(!cv)return;const dpr=devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;cv.width=W*dpr;cv.height=H*dpr;const g=cv.getContext('2d');g.scale(dpr,dpr);
-  const d=daysAt(s),c=COL[statusOf(d)],rate=(s.thr-s.now)/(s.days/7),r=rnd(s.id.length*977+s.days),span=Math.abs(s.now-s.thr);
-  const hist=[];for(let t=-20;t<=0;t++){const drift=s.id==='rm'?rate*t*(t>-6?1:-.5):rate*t*(1+.15*Math.sin(t/3));hist.push([t,s.now+drift+(t<0?(r()-.5)*span*.06:0)])}
-  const fc=[];for(let t=0;t<=8;t++){const m=s.now+rate*t,w=span*(1-s.conf/100)*(t/8)*1.3+span*.02*t;fc.push([t,m,m-w,m+w])}
+  const d=daysAt(s),c=COL[statusOf(d)];
+  const hist=s.model.obs.filter(o=>o.v!==null&&o.t>=-20).map(o=>[o.t,o.v]);
+  const filt=s.model.filt.filter(o=>o.t>=-20).map(o=>[o.t,o.v]);
+  const fc=s.model.band.map((q,k)=>[k,q.mid,q.lo,q.hi]);
   const all=[...hist.map(h=>h[1]),...fc.flatMap(f=>[f[2],f[3]]),s.thr];let mn=Math.min(...all),mx=Math.max(...all);const pad=(mx-mn)*.1;mn-=pad;mx+=pad;
   const X=t=>4+(t+20)/28*(W-8),Y=v=>H-6-(v-mn)/(mx-mn)*(H-14),nowX=X(week);
   const t0=performance.now();
@@ -677,8 +749,8 @@ function drawChart(s){
     g.fillStyle='rgba(13,31,42,.06)';g.fillRect(X(0),0,W-X(0),H);
     g.save();g.beginPath();g.rect(0,0,4+(W-8)*ease(p),H);g.clip();
     const gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'rgba(10,154,168,.22)');gr.addColorStop(1,'rgba(10,154,168,0)');
-    g.fillStyle=gr;g.beginPath();g.moveTo(X(-20),H);hist.forEach(h=>g.lineTo(X(h[0]),Y(h[1])));g.lineTo(X(0),H);g.fill();
-    g.strokeStyle='#0a9aa8';g.lineWidth=2.2;g.lineJoin='round';g.beginPath();hist.forEach((h,k)=>k?g.lineTo(X(h[0]),Y(h[1])):g.moveTo(X(h[0]),Y(h[1])));g.stroke();
+    g.fillStyle=gr;g.beginPath();g.moveTo(X(-20),H);filt.forEach(h=>g.lineTo(X(h[0]),Y(h[1])));g.lineTo(X(0),H);g.fill();
+    g.fillStyle='rgba(23,38,46,.35)';hist.forEach(p=>{g.beginPath();g.arc(X(p[0]),Y(p[1]),1.8,0,7);g.fill()});g.strokeStyle='#0a9aa8';g.lineWidth=2.2;g.lineJoin='round';g.beginPath();filt.forEach((h,k)=>k?g.lineTo(X(h[0]),Y(h[1])):g.moveTo(X(h[0]),Y(h[1])));g.stroke();
     g.fillStyle=c+'2a';g.beginPath();fc.forEach((f,k)=>k?g.lineTo(X(f[0]),Y(f[3])):g.moveTo(X(f[0]),Y(f[3])));[...fc].reverse().forEach(f=>g.lineTo(X(f[0]),Y(f[2])));g.fill();
     g.strokeStyle=c;g.setLineDash([5,4]);g.beginPath();fc.forEach((f,k)=>k?g.lineTo(X(f[0]),Y(f[1])):g.moveTo(X(f[0]),Y(f[1])));g.stroke();g.setLineDash([]);g.restore();
     g.strokeStyle='#0d1f2a';g.globalAlpha=.5;g.beginPath();g.moveTo(nowX,0);g.lineTo(nowX,H);g.stroke();g.globalAlpha=1;
@@ -1006,9 +1078,9 @@ async function ask(q){if(chatBusy)return;chatBusy=true;addMsg('me',q);chatHist.p
   else{const d=addMsg('bot typing','…');await new Promise(r=>setTimeout(r,450));d.remove();const a=localAnswer(q);botSay(a.text,a.site)}
   chatBusy=false;renderChips()}
 function buildPrompt(){
-  const data=SITES.map(s=>`${s.name} (${s.area}): ${daysAt(s)} days until ${s.unit==='mS/cm'?'unsafe salinity':'dry'} (range ${s.lo}-${s.hi}, confidence ${s.conf}%), status ${LBL[statusOf(daysAt(s))]}, danger ${s.danger.score}/100 (${s.danger.lvl}). Problem: ${s.issue}. ${s.cause} Advice: ${s.danger.avoid} Fix: ${s.steps.map(x=>x[0]+' - '+x[1]).join('; ')}. ${s.people} people depend on it.`).join('\n');
+  const data=SITES.map(s=>`${s.name} (${s.area}): ${daysAt(s)>0?daysAt(s)+' days until '+(s.unit==='mS/cm'?'unsafe salinity':'dry'):'already failed by then'} (range ${s.lo}-${s.hi}, confidence ${s.conf}%), status ${LBL[statusOf(daysAt(s))]}, danger ${s.danger.score}/100 (${s.danger.lvl}). Problem: ${s.issue}. ${s.cause} Advice: ${s.danger.avoid} Fix: ${s.steps.map(x=>x[0]+' - '+x[1]).join('; ')}. ${s.people} people depend on it.`).join('\n');
   const sys=`You are the SAQI assistant on a website that gives early warnings for desert water wells in Al Dhafra and Al Ain, Abu Dhabi. Answer the visitor's question in 2 to 5 short sentences, plainly and warmly, in the same language they write in (Arabic if they write Arabic). Only use the facts below. If asked something unrelated, say briefly that you can help with the wells and this website.
-How SAQI works: every night it combines GRACE-FO groundwater, Sentinel-2 vegetation, Sentinel-1 radar (sees through cloud), CHIRPS rainfall, ERA5 climate, well sensors and herder text reports. A Kalman filter fuses them and a survival model predicts days until failure with an 80% range. Alerts: Stable, Watch, Warning (needs 2 independent signals), Act now. Warnings go by Arabic SMS and an automated voice call to basic phones; herders reply 1 or 2. If a sensor dies, it switches to satellite and herder reports, widens the range and marks it degraded. Forecasts on this site are simulated for real places.
+How SAQI works: every night it combines GRACE-FO groundwater, Sentinel-2 vegetation, Sentinel-1 radar (sees through cloud), CHIRPS rainfall, ERA5 climate, well sensors and herder text reports. A Kalman filter fuses them into a water-level estimate and trend, then 2,000 simulated futures (Monte Carlo) give the days until failure, an 80% range and a confidence score (share of futures within 30% of the median). Alerts: Stable, Watch, Warning (needs 2 independent signals), Act now. Warnings go by Arabic SMS and an automated voice call to basic phones; herders reply 1 or 2. If a sensor dies, it switches to satellite and herder reports, widens the range and marks it degraded. Forecasts on this site are simulated for real places.
 How to use the site: click a well in the left list or a beacon on the 3D map to zoom in; drag to rotate, scroll to zoom; Play guided tour narrates every well; the Forecast slider looks up to 8 weeks ahead; the right panel shows days left, danger level, a map of where to go instead, how to fix it and the SMS sent; Home returns to the start page; ? replays the walkthrough.
 Current forecast (today + ${week} weeks):
 ${data}`;
@@ -1021,7 +1093,7 @@ function localAnswer(q){const t=q.toLowerCase(),s=findSite(q),has=(...w)=>w.some
     if(has('fix','solve','do ','plan','help'))return{site:s,text:`How to fix ${s.name}:\n`+s.steps.map((x,i)=>`${i+1}. ${x[0]}: ${x[1]}`).join('\n')};
     if(has('go','avoid','instead','safe','where'))return{site:s,text:s.danger.avoid+(go?` ${go.name} is about ${kmBetween(s,go)} km away.`:'')};
     return{site:s,text:`${s.name}: about ${Math.max(0,d)} days until ${s.unit==='mS/cm'?'the water is too salty':'it runs dry'} (likely ${s.lo}–${s.hi}). Danger ${s.danger.score}/100, ${s.danger.lvl.toLowerCase()}.\nProblem: ${s.issue}.\nWhat to do: ${s.danger.avoid}`}}
-  if(has('danger','worst','urgent','critical','risk','bad'))return{site:byDanger[0],text:'From most to least dangerous:\n'+byDanger.map((x,i)=>`${i+1}. ${x.name}: ${x.danger.score}/100, ${daysAt(x)} days left`).join('\n')};
+  if(has('danger','worst','urgent','critical','risk','bad'))return{site:byDanger[0],text:'From most to least dangerous:\n'+byDanger.map((x,i)=>`${i+1}. ${x.name}: ${x.danger.score}/100, ${daysAt(x)>0?daysAt(x)+' days left':'dry by then'}`).join('\n')};
   if(has('safe','best','where should','go to','healthy'))return{site:SITES.find(x=>x.id==='gh'),text:'The safest wells right now are Remah (8/100) and Ghayathi (14/100). Herds from Hameem and Madinat Zayed go to Ghayathi; herds from Al Qua’a and Sweihan go to Remah.'};
   if(has('predict','model','how does','how do you','data','satellite','work'))return{text:'Every night SAQI combines satellite groundwater (GRACE-FO), vegetation (Sentinel-2), radar that sees through cloud (Sentinel-1), rainfall (CHIRPS), climate (ERA5), well sensors and herder texts. It fuses them into one water-level estimate and predicts the days until a well fails, with a likely range and a confidence score.'};
   if(has('sensor','broken','offline','cloud','fail'))return{site:SITES.find(x=>x.id==='sw'),text:'If a sensor goes silent, SAQI keeps going on satellite data and herder reports, widens the forecast range and marks it as degraded so nobody over-trusts it. A repair ticket is raised automatically. Sweihan is an example right now.'};

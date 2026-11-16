@@ -19,6 +19,14 @@ SAQI predicts which desert wells are failing weeks before they run dry. It then 
 - **Guided tour** with narration and subtitles.
 - **Forecast slider** to see the region up to 8 weeks ahead.
 
+## How the forecast works
+Everything runs live in the browser (see the "How we calculated this" panel for each well):
+1. **Data:** 26 weeks of weekly water-level or salinity readings for each well, plus a monthly GRACE-FO groundwater trend. The readings are realistically simulated.
+2. **Kalman filter:** fuses the readings into the current level and its rate of change, with uncertainty. When a sensor goes silent, the filter keeps going on satellite data and the uncertainty grows.
+3. **Monte Carlo:** runs 2,000 simulated futures to give the median days until failure, an 80% range, and a confidence score (the share of futures within 30% of the median).
+4. **Alert level:** set from the chance of failing within 3, 6 and 8 weeks. A Warning or Act now alert also needs 2 of 3 independent signal groups (sensor, satellite, herders) to agree.
+5. **Danger score:** combines the 8-week failure risk, how soon the well fails, and how uncertain the forecast is.
+
 ## Run
 Open `index.html` in Chrome or Edge. There is no build step.
 
