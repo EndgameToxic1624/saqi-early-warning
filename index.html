@@ -286,6 +286,11 @@ body{font-family:var(--sans);font-variant-numeric:tabular-nums;background:var(--
 .toolbar{flex-wrap:nowrap}.toolbar select{max-width:150px}.toolbar select:empty{display:none}
 .hint{letter-spacing:0;top:126px}.subbar{top:76px}
 .topbar{align-items:center}
+.locchip{display:flex;gap:10px;align-items:center;box-shadow:0 1px 2px rgba(23,38,46,.05)}.locchip b{color:var(--text);font-weight:700}.locchip span{color:var(--soft)}
+#caption{bottom:16px;width:min(540px,calc(100% - 120px));padding:10px 14px;gap:10px;align-items:center;background:rgba(255,255,255,.94);backdrop-filter:blur(8px)}
+#caption .avatar{width:28px;height:28px}#caption .avatar i{height:9px}#caption .who{display:none}#capText{font-size:14px;line-height:1.45}
+.horizon span,.locchip b,.locchip span{white-space:nowrap}.subbar{flex-wrap:wrap;justify-content:flex-start}
+@media(max-width:1440px){.locchip span{display:none}}
 </style>
 </head>
 <body>
@@ -374,11 +379,12 @@ body{font-family:var(--sans);font-variant-numeric:tabular-nums;background:var(--
     </div>
     <div class="subbar">
       <div class="horizon"><span>Forecast</span><input type="range" id="week" min="0" max="8" step="1" value="0" aria-label="Forecast horizon in weeks"><span>Today + <b id="wk">0</b> weeks, <b id="dateLbl"></b></span></div>
+      <div class="chip locchip"><b>Al Dhafra and Al Ain, Abu Dhabi</b><span id="coordChip">23°55′ N / 54°15′ E</span></div>
     </div>
     <div class="hint" id="hint">Click a beacon to zoom into its problem. Drag to rotate.</div>
     <div class="focus-tag" id="focusTag"><strong id="focusTitle">SITE LOCKED</strong><span id="focusSub"></span></div>
     <div id="caption"><div class="avatar"><i></i><i></i><i></i></div><div><div class="who">SAQI guide</div><div id="capText"></div></div></div>
-    <div class="map-left-meta"><div class="chip" style="font-weight:700;color:var(--text)">Al Dhafra and Al Ain, Abu Dhabi</div><div class="chip" id="coordChip">23°55′ N / 54°15′ E</div></div>
+    
     <div class="toast" id="toast"></div>
   </main>
 
@@ -483,7 +489,9 @@ function scoreVoice(v){const n=v.name;let s=0;
   if(/Natural|Neural|Online/i.test(n))s+=100;if(/Premium|Enhanced|Siri/i.test(n))s+=80;
   if(/Google UK English Female|Google US English/i.test(n))s+=60;
   if(/Samantha|Daniel|Karen|Serena|Moira|Tessa|Ava|Allison|Susan|Sonia|Libby|Jenny|Aria|Emma/i.test(n))s+=40;
-  if(/en-GB/i.test(v.lang))s+=6;if(/en-US/i.test(v.lang))s+=5;if(/espeak|Zira|David|Mark|Hazel/i.test(n))s-=20;return s}
+  if(/en-GB/i.test(v.lang))s+=6;if(/en-US/i.test(v.lang))s+=5;if(/espeak|Zira|David|Mark|Hazel/i.test(n))s-=20;
+  if(/Female|Sonia|Libby|Jenny|Aria|Emma|Ava|Samantha|Karen|Serena|Moira|Tessa|Susan|Allison|Michelle|Natasha|Clara|Maisie/i.test(n))s+=12;
+  if(/Male|Ryan|Guy|Andrew|Brian|Daniel|Thomas|Christopher|Eric|Roger|Steffan/i.test(n))s-=8;return s}
 function loadVoices(){if(!('speechSynthesis' in window))return;
   voices=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang)).sort((a,b)=>scoreVoice(b)-scoreVoice(a));if(!voices.length)return;
   const saved=store.get('saqi-voice','');voice=voices.find(v=>v.name===saved)||voices[0];
@@ -516,7 +524,7 @@ function speak(text,onDone,key){
     if(!voiceOn||!('speechSynthesis' in window)){let i=0;const nx=()=>{if(tok!==speakTok)return;if(i>=parts.length)return finish();ct.textContent=parts[i];setTimeout(nx,Math.max(1600,parts[i++].length*60))};return nx()}
     let i=0;const next=()=>{if(tok!==speakTok)return;if(i>=parts.length)return finish();
       const s=parts[i++];ct.textContent=s;const u=new SpeechSynthesisUtterance(s.replace(/\.\.\./g,','));if(voice){u.voice=voice;u.lang=voice.lang}
-      u.rate=rate*(.97+Math.random()*.06)*(s.length<28?.93:1);u.pitch=s.endsWith('?')?1.07:.98+Math.random()*.04;
+      u.rate=rate*(.97+Math.random()*.06)*(s.length<28?.93:1);u.pitch=(s.endsWith('?')?1.24:1.15+Math.random()*.04);
       let done=false;const fin=()=>{if(done)return;done=true;setTimeout(next,s.length<28?420:260)};
       u.onend=fin;u.onerror=fin;setTimeout(()=>{if(!done&&!speechSynthesis.speaking)fin()},s.length*110+5000);speechSynthesis.speak(u)};next()}
 }
