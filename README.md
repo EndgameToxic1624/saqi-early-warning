@@ -30,7 +30,7 @@ Everything runs live in the browser (see the "How we calculated this" panel for 
 5. **Danger score:** combines the 8-week failure risk, how soon the well fails, and how uncertain the forecast is.
 
 ## Run
-Live: https://endgametoxic1624.github.io/saqi-early-warning/
+Live: https://saqi-early-warning.vercel.app/ (mirror: https://endgametoxic1624.github.io/saqi-early-warning/)
 
 To run it locally, serve the folder (the 3D map uses JavaScript modules, which browsers block when opening the file directly):
 
